@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qoin Maker — local checklist</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0e1116; --card:#181d27; --ink:#e8edf5; --muted:#9aa6b5; --accent:#7cb4ff; }
+    body { margin:0; font:16px/1.5 ui-sans-serif, system-ui; background:var(--bg); color:var(--ink); }
+    main { max-width:720px; margin:40px auto; padding:0 20px; }
+    .card { background:var(--card); border-radius:16px; padding:24px; }
+    h1 { margin-top:0; font-size:1.6rem; }
+    label { display:block; margin:12px 0 4px; color:var(--muted); font-size:0.9rem; }
+    input, select { width:100%; box-sizing:border-box; padding:10px 12px; border-radius:8px; border:1px solid #2a3342; background:#10141b; color:var(--ink); }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .row > * { flex:1; min-width:140px; }
+    pre { background:#10141b; padding:16px; border-radius:12px; overflow:auto; }
+    .warn { color:#f3c678; font-size:0.9rem; }
+    a { color:var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card">
+      <h1>Qoin Maker</h1>
+      <p>Local checklist only. This page does not deploy a token and does not
+      connect a wallet. Copy the command into a terminal after you have
+      reviewed <code>LICENSE</code>.</p>
+      <div class="row">
+        <div><label>Name</label><input id="name" value="Harbor Qoin" /></div>
+        <div><label>Symbol</label><input id="symbol" value="HQN" /></div>
+      </div>
+      <div class="row">
+        <div><label>Supply</label><input id="supply" type="number" value="1000000" /></div>
+        <div><label>Decimals</label><input id="decimals" type="number" value="18" /></div>
+        <div>
+          <label>Chain hint</label>
+          <select id="chain">
+            <option value="base">base</option>
+            <option value="ethereum">ethereum</option>
+            <option value="sepolia">sepolia</option>
+          </select>
+        </div>
+      </div>
+      <label><input id="mintable" type="checkbox" /> mintable</label>
+      <label><input id="burnable" type="checkbox" checked /> burnable</label>
+      <label><input id="capped" type="checkbox" /> capped</label>
+      <pre id="cmd"></pre>
+      <p class="warn">Production launches, agency work, and white-label use may
+      require a paid Commercial License. This product is not affiliated with
+      official Qoin on Base.</p>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    function render() {
+      const flags = [];
+      if ($("mintable").checked) flags.push("--mintable");
+      if ($("burnable").checked) flags.push("--burnable");
+      if ($("capped").checked) flags.push("--capped");
+      $("cmd").textContent =
+        `qoin-maker generate --name "${$("name").value}" --symbol ${$("symbol").value.toUpperCase()} --supply ${$("supply").value} --decimals ${$("decimals").value} --chain ${$("chain").value} ${flags.join(" ")} --out ./out-token`.replace(/\s+/g, " ").trim();
+    }
+    document.querySelectorAll("input,select").forEach((el) => el.addEventListener("input", render));
+    render();
+  </script>
+</body>
+</html>

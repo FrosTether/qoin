@@ -1,0 +1,124 @@
+Qoin Maker Source-Available License (QMSAL) 1.0
+Copyright (c) 2026 FrosTether and contributors.
+
+THIS SOFTWARE IS SOURCE-AVAILABLE, NOT OSI OPEN SOURCE.
+
+================================================================================
+1. Definitions
+================================================================================
+
+"Licensor" means the copyright holder(s) of Qoin Maker.
+
+"Software" means Qoin Maker and all accompanying source, templates,
+documentation, and generated scaffolding contained in this repository,
+excluding third-party components that carry their own licenses.
+
+"You" means an individual or legal entity exercising permissions under
+this license.
+
+"Non-Production Use" means use solely for evaluation, education,
+personal hobby projects that are not offered to paying customers,
+research, or internal testing that does not result in a publicly
+deployed token, product, or service.
+
+"Production Use" means any use where the Software, or output generated
+by the Software (including smart contracts, deployment scripts, or
+white-label tools), is used to:
+
+  (a) launch, market, or operate a token, coin, or digital asset for
+      a business, community with commercial intent, or paying clients;
+  (b) provide a hosted, SaaS, or agency service that wraps the Software;
+  (c) embed the Software in a commercial product;
+  (d) resell, sublicense, or white-label the Software; or
+  (e) generate revenue, fundraising proceeds, or client fees that
+      depend on the Software or its output.
+
+"Change Date" means 26 September 2030.
+
+"Change License" means Apache License, Version 2.0.
+
+================================================================================
+2. Grant (Community / Evaluation)
+================================================================================
+
+Subject to the conditions below, Licensor grants You a worldwide,
+royalty-free, non-exclusive, non-transferable license to use, copy,
+modify, and create derivative works of the Software for Non-Production
+Use only.
+
+You may also use the Software in Production Use if ALL of the following
+are true without a Commercial License:
+
+  * Your trailing twelve-month revenue attributable to tokens or
+    products created with the Software is under USD $10,000; AND
+  * You are not offering the Software itself as a service or
+    white-label product; AND
+  * You retain this license notice in source distributions.
+
+Any other Production Use requires a paid Commercial License
+(see COMMERCIAL_LICENSE.md and PRICING.md).
+
+================================================================================
+3. Conditions
+================================================================================
+
+3.1 You must retain this copyright notice and license text in all
+    copies or substantial portions of the Software.
+
+3.2 You must not remove or obscure license, attribution, or disclaimer
+    comments generated into contracts and project files.
+
+3.3 You must not represent the Software as official Qoin (Australia),
+    Post-Quantum Qoin, or any unaffiliated project.
+
+3.4 Generated tokens are Your responsibility. The Software does not
+    provide legal, tax, or securities advice.
+
+3.5 This license does not grant trademark rights in "Qoin Maker".
+
+================================================================================
+4. Change License
+================================================================================
+
+On the Change Date, each version of the Software published under this
+license is also licensed to You under the Change License. Until that
+date, this QMSAL 1.0 (or a Commercial License) controls.
+
+================================================================================
+5. Commercial License
+================================================================================
+
+Production Use that exceeds Section 2 requires a separate written
+Commercial License from Licensor. Contact and terms:
+see COMMERCIAL_LICENSE.md.
+
+Purchasing a Commercial License replaces the Production Use restriction
+for the licensed scope; all disclaimers in Section 6 still apply.
+
+================================================================================
+6. Disclaimer and Limitation of Liability
+================================================================================
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND
+NON-INFRINGEMENT.
+
+IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE,
+ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE, INCLUDING ANY TOKEN YOU GENERATE,
+DEPLOY, MARKET, OR SELL.
+
+YOU ARE SOLELY RESPONSIBLE FOR COMPLIANCE WITH SECURITIES, AML/CTF,
+CONSUMER, TAX, AND OTHER LAWS IN EVERY JURISDICTION WHERE YOU OPERATE.
+
+================================================================================
+7. Termination
+================================================================================
+
+This license terminates automatically if You breach it. Upon
+termination You must cease Production Use of the Software. Licenses
+already validly granted in generated output to third-party holders of
+deployed contracts are not retroactively voided, but You may not use
+the Software to generate further Production output.
