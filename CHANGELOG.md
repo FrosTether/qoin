@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `frostchain/`: 20 MyDoge.frostchain FLAC containers and `frostchain_fill.py`.
+
 ## 0.1.0 — 2026-09-26
 
 - Initial public source-available release.

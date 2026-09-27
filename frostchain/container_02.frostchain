@@ -1,0 +1,31 @@
+{
+  "magic": "FROSTCHAIN",
+  "format_version": "0.1",
+  "container": "MyDoge.frostchain/02",
+  "index": 2,
+  "of": 20,
+  "owner": {
+    "mydoge_profile": "https://mydoge.com/frostcoin",
+    "handle": "frostcoin",
+    "doge_address": "DJTDVRxJGtcuSsxwT7GHbkdCabqaTa1C7s"
+  },
+  "created": "2026-09-27",
+  "payload": {
+    "type": "audio/flac",
+    "filename": null,
+    "sha256": null,
+    "size_bytes": null,
+    "sample_rate_hz": null,
+    "channels": null,
+    "bits_per_sample": null,
+    "duration_seconds": null,
+    "audio_md5": null
+  },
+  "anchor": {
+    "chain": null,
+    "txid": null,
+    "block_height": null
+  },
+  "notes": "",
+  "container_sha256": "5c8531de940e40911a548059f92d50f72d62c16e96b02f05983b934a31d252a8"
+}
