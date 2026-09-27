@@ -37,3 +37,14 @@ def test_cli_explain(capsys):
     assert rc == 0
     out = capsys.readouterr().out
     assert '"symbol": "HQN"' in out
+
+
+def test_zero_supply_needs_mintable(tmp_path: Path):
+    with pytest.raises(SpecError):
+        write_project(TokenSpec(name="Pegged", symbol="PEG", initial_supply=0, out_dir=tmp_path / "a"))
+    root = write_project(
+        TokenSpec(name="Pegged", symbol="PEG", initial_supply=0, mintable=True, out_dir=tmp_path / "b")
+    )
+    source = (root / "src" / "Pegged.sol").read_text(encoding="utf-8")
+    assert "_mint(msg.sender" not in source
+    assert "function mint" in source

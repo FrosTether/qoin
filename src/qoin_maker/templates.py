@@ -199,7 +199,11 @@ def erc20_contract(
         + "    constructor() {\n"
         + ownable_ctor
         + cap_ctor
-        + f"        _mint(msg.sender, {initial_supply} * (10 ** uint256(decimals)));\n"
+        + (
+            f"        _mint(msg.sender, {initial_supply} * (10 ** uint256(decimals)));\n"
+            if initial_supply > 0
+            else ""
+        )
         + "    }\n\n"
         + ownable_mod
         + body

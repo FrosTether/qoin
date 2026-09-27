@@ -35,7 +35,7 @@ class TokenSpec:
             name=require_name(self.name),
             symbol=require_symbol(self.symbol),
             decimals=require_decimals(self.decimals),
-            initial_supply=require_supply(self.initial_supply),
+            initial_supply=require_supply(self.initial_supply, allow_zero=self.mintable),
             mintable=self.mintable,
             burnable=self.burnable,
             capped=self.capped,
@@ -45,6 +45,8 @@ class TokenSpec:
             out_dir=Path(self.out_dir),
         )
         if spec.capped and spec.cap is None:
+            if spec.initial_supply == 0:
+                raise ValueError("A capped token with 0 initial supply needs an explicit --cap")
             spec.cap = spec.initial_supply
         if spec.capped and spec.cap is not None and spec.cap < spec.initial_supply:
             raise ValueError("Cap must be >= initial supply")

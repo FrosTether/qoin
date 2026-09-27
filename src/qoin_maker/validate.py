@@ -35,9 +35,12 @@ def require_decimals(decimals: int) -> int:
     return decimals
 
 
-def require_supply(supply: int) -> int:
-    if supply <= 0:
-        raise SpecError("Initial supply must be a positive integer (whole tokens)")
+def require_supply(supply: int, allow_zero: bool = False) -> int:
+    if supply < 0 or (supply == 0 and not allow_zero):
+        raise SpecError(
+            "Initial supply must be a positive integer (whole tokens); "
+            "0 is allowed only with --mintable (a wrapped or pegged token)"
+        )
     if supply > 10**27:
         raise SpecError("Initial supply is implausibly large")
     return supply
