@@ -1,0 +1,59 @@
+# Qoin - build notes
+
+Qoin is a fork of Wownero. This repo builds three programs, and `graysons/` holds the desktop app:
+
+| Program | What it is |
+|---|---|
+| `qoind` | the Qoin node |
+| `graysons-wallet-cli` / `graysons-wallet-rpc` | **Graysons Wallet**, the forked Wownero wallet (command line and RPC engine) |
+| `graysons/graysons-wallet` | Graysons Wallet desktop app (runs in your browser, talks to the RPC engine) |
+| `graysons/frostoise` | **Frostoise**, the wallet miner: solo-mines Qoin into the open Graysons wallet |
+
+## What changed from Wownero
+
+- **Name:** `CRYPTONOTE_NAME` is `qoin`. Data dir is `~/.qoin`. Unit name is `qoin` (sub-units keep Wownero's names). The `donate` command is disabled, since it pointed at Wownero's address.
+- **Own network:** new `NETWORK_ID`, `GENESIS_NONCE` 8294, ports 45670 (P2P) / 45671 (RPC) / 45672 (ZMQ), address prefixes 9999 / 19998 / 29997. Wownero's hardcoded seed nodes are removed, so a Qoin node only connects to peers you give it.
+- **Reward:** every block pays 1.5x what Wownero's emission curve pays at the same point (`get_block_reward()` in `src/cryptonote_basic/cryptonote_basic_impl.cpp`). The supply cap is unchanged; coins are emitted faster, not more of them.
+- **Premine:** block 1 pays exactly **13,370.08241991** QOIN (`QOIN_PREMINE` in `src/cryptonote_config.h`). It goes to whoever mines block 1, so mine it yourself before anyone else connects (Frostoise with the node set to Offline).
+- **Block time:** 5 minutes (inherited).
+- **Checkpoints removed** (they pinned Wownero block hashes).
+- **Upgrade schedule compressed:** `src/hardforks/hardforks.cpp` reaches current rules (v20) by block 65.
+
+## Build
+
+```bash
+cd ~/frostnero
+mkdir -p build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF ..
+make -j1 daemon simplewallet wallet_rpc_server
+```
+
+`-j1` because this laptop has 3 GB of RAM; parallel C++ jobs can run it out of memory. Binaries land in `build/bin/`.
+
+## Run Graysons Wallet and Frostoise
+
+```bash
+~/frostnero/graysons/install-shortcuts.sh   # once: adds both to the app menu and ~/.local/bin
+graysons-wallet                              # or: frostoise
+```
+
+Each command starts a small local server on 127.0.0.1:45680 and opens it in your browser. It starts `qoind` and `graysons-wallet-rpc` for you and stops them when you press Ctrl+C. Wallet files live in `~/.qoin/wallets/`. They're ordinary wallet files, so `graysons-wallet-cli --wallet-file ~/.qoin/wallets/<name>` opens them too.
+
+### Mining the premine with Frostoise
+
+1. Open Graysons Wallet, create a wallet, and write down the seed.
+2. **Node** tab: tick **Offline** and save. Then Stop node and Start node so the setting takes effect.
+3. **Frostoise** tab: pick threads, press **Start mining**. Block 1 pays the premine.
+4. When you're ready for others to join, untick Offline, add their `host:45670` under peers, and restart the node.
+
+The node only takes the block-signing key at startup. So Start mining restarts the node once with this wallet's spend key. The key goes into `~/.qoin/frostoise.conf` (mode 600), and that file is deleted as soon as the node answers. It never appears on a command line. Frostoise refuses view-only wallets. It also refuses wallets whose view key isn't derived from the spend key, because every block those signed would be rejected.
+
+Coinbase rewards are locked for a number of blocks before they can be spent.
+
+### Spend key as a sine-tone WAV (optional)
+
+`tools/sinekey.py` still works: `python3 tools/sinekey.py new ~/qoin-key.wav` prints a key, and `build/bin/graysons-wallet-cli --generate-from-spend-key ~/.qoin/wallets/<name>` turns it into a wallet that Graysons and Frostoise can open.
+
+## Not yet built: the Bitcoin Cash timing oracle
+
+The BCH-driven 159s / 161s / 1s cycle is a separate protocol layer. The phases add up to 321s against the 300s block time; decide whether the block time or the phases change, and it can be specced from there.

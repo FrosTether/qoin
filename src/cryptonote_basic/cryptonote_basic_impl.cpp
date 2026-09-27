@@ -92,6 +92,21 @@ namespace cryptonote {
       base_reward = FINAL_SUBSIDY_PER_MINUTE*target_minutes;
     }
 
+    // Qoin: pay out 3/2 (1.5x) of what Wownero's own curve would award
+    // for this same already_generated_coins state.
+    base_reward = base_reward * 3 / 2;
+
+    // Qoin premine: block 1 pays QOIN_PREMINE instead of the curve.
+    // Block 1 is recognised by the coin count it inherits: the genesis block
+    // always generates some coins (> 0) but far fewer than the premine, and
+    // every block after a full premine sits above it. Keying off
+    // already_generated_coins keeps every caller (validation, block templates,
+    // tx pool, RPC) in agreement without threading block height through.
+    if (already_generated_coins > 0 && already_generated_coins < QOIN_PREMINE)
+    {
+      base_reward = QOIN_PREMINE;
+    }
+
     uint64_t full_reward_zone = get_min_block_weight(version);
 
     //make it soft

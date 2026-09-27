@@ -1,0 +1,3 @@
+#!/bin/sh
+# Frostoise - the Qoin wallet miner. Same app as Graysons Wallet, opened on the miner.
+exec python3 "$(dirname "$(readlink -f "$0")")/qoin_backend.py" --page frostoise "$@"

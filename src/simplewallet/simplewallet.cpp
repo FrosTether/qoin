@@ -2373,7 +2373,7 @@ bool simple_wallet::welcome(const std::vector<std::string> &args)
   message_writer() << tr("Flaws in Wownero may be discovered in the future, and attacks may be developed to peek under some");
   message_writer() << tr("of the layers of privacy Wownero provides. Be safe and practice defense in depth.");
   message_writer() << "";
-  message_writer() << tr("Welcome to Wownero and financial privacy. For more information see https://wownero.org");
+  message_writer() << tr("Welcome to Graysons Wallet for Qoin.");
   return true;
 }
 
@@ -2715,7 +2715,7 @@ bool simple_wallet::set_unit(const std::vector<std::string> &args/* = std::vecto
   const std::string &unit = args[1];
   unsigned int decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
 
-  if (unit == "wownero")
+  if (unit == "qoin")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
   else if (unit == "verywow")
     decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 4;
@@ -3274,7 +3274,7 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
     message_writer() << tr("\"balance\" - Show balance.");
     message_writer() << tr("\"address all\" - Show all addresses.");
     message_writer() << tr("\"address new\" - Create new subaddress.");
-    message_writer() << tr("\"transfer <address> <amount>\" - Send WOW to an address.");
+    message_writer() << tr("\"transfer <address> <amount>\" - Send QOIN to an address.");
     message_writer() << tr("\"show_transfers [in|out|pending|failed|pool]\" - Show transactions.");
     message_writer() << tr("\"sweep_all <address>\" - Send whole balance to another wallet.");
     message_writer() << tr("\"seed\" - Show secret 25 words that can be used to recover this wallet.");
@@ -3524,8 +3524,8 @@ simple_wallet::simple_wallet()
                                   "ask-password <0|1|2   (or never|action|decrypt)>\n "
                                   "  action: ask the password before many actions such as transfer, etc\n "
                                   "  decrypt: same as action, but keeps the spend key encrypted in memory when not needed\n "
-                                  "unit <wownero|verywow|muchwow|suchwow|dust>\n "
-                                  "  Set the default WOW (sub-)unit.\n "
+                                  "unit <qoin|verywow|muchwow|suchwow|dust>\n "
+                                  "  Set the default QOIN (sub-)unit.\n "
                                   "min-outputs-count [n]\n "
                                   "  Try to keep at least that many outputs of value at least min-outputs-value.\n "
                                   "min-outputs-value [n]\n "
@@ -3561,7 +3561,7 @@ simple_wallet::simple_wallet()
                                   "background-sync <off|reuse-wallet-password|custom-background-password>\n "
                                   "  Set this to enable scanning in the background with just the view key while the wallet is locked.\n "
                                   "setup-background-mining <1|0>\n "
-                                  "  Whether to enable background mining. Set this to support the network and to get a chance to receive new WOW.\n "
+                                  "  Whether to enable background mining. Set this to support the network and to get a chance to receive new QOIN.\n "
                                   "device-name <device_name[:device_spec]>\n "
                                   "  Device name for hardware wallet.\n "
                                   "export-format <\"binary\"|\"ascii\">\n "
@@ -4033,7 +4033,7 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("refresh-type", set_refresh_type, tr("full (slowest, no assumptions); optimize-coinbase (fast, assumes the whole coinbase is paid to a single address); no-coinbase (fastest, assumes we receive no coinbase transaction), default (same as optimize-coinbase)"));
     CHECK_SIMPLE_VARIABLE("priority", set_default_priority, tr("0, 1, 2, 3, or 4, or one of ") << join_priority_strings(", "));
     CHECK_SIMPLE_VARIABLE("ask-password", set_ask_password, tr("0|1|2 (or never|action|decrypt)"));
-    CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("wownero, verywow, muchwow, suchwow, dust"));
+    CHECK_SIMPLE_VARIABLE("unit", set_unit, tr("qoin, verywow, muchwow, suchwow, dust"));
     CHECK_SIMPLE_VARIABLE("max-reorg-depth", set_max_reorg_depth, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("min-outputs-count", set_min_output_count, tr("unsigned integer"));
     CHECK_SIMPLE_VARIABLE("min-outputs-value", set_min_output_value, tr("amount"));
@@ -5103,7 +5103,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
     "Use the \"help\" command to see a simplified list of available commands.\n"
     "Use \"help all\" command to see the list of all available commands.\n"
     "Use \"help <command>\" to see a command's documentation.\n"
-    "Always use the \"exit\" command when closing wownero-wallet-cli to save \n"
+    "Always use the \"exit\" command when closing graysons-wallet-cli to save \n"
     "your current session's state. Otherwise, you might need to synchronize \n"
     "your wallet again (your wallet keys are NOT at risk in any case).\n")
   ;
@@ -5564,7 +5564,7 @@ void simple_wallet::check_background_mining(const epee::wipeable_string &passwor
   {
     message_writer() << tr("The daemon is not set up to background mine.");
     message_writer() << tr("With background mining enabled, the daemon will mine when idle and not on battery.");
-    message_writer() << tr("Enabling this supports the network you are using, and makes you eligible for receiving new WOW");
+    message_writer() << tr("Enabling this supports the network you are using, and makes you eligible for receiving new QOIN");
     std::string accepted = input_line(tr("Do you want to do it now? (Y/Yes/N/No): "));
     if (std::cin.eof() || !command_line::is_yes(accepted)) {
       m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningNo);
@@ -7883,6 +7883,9 @@ bool simple_wallet::sweep_below(const std::vector<std::string> &args_)
 bool simple_wallet::donate(const std::vector<std::string> &args_)
 {
   CHECK_IF_BACKGROUND_SYNCING("cannot donate");
+  // Qoin: the built-in donation address is Wownero's and is not valid on this network.
+  fail_msg_writer() << tr("donate is disabled on Qoin");
+  return true;
   std::vector<std::string> local_args = args_;
   if(local_args.empty() || local_args.size() > 5)
   {

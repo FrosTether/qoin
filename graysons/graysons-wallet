@@ -1,0 +1,3 @@
+#!/bin/sh
+# Graysons Wallet for Qoin - opens the wallet in your browser.
+exec python3 "$(dirname "$(readlink -f "$0")")/qoin_backend.py" --page wallet "$@"

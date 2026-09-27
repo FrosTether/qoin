@@ -31,21 +31,26 @@
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain.hardforks"
 
+// Qoin: Wownero's mainnet schedule would keep a brand-new chain on 2018-era
+// rules (and pre-RandomX proof-of-work) for years of blocks. Instead, walk
+// through every version in quick succession - the same heights Wownero uses on
+// testnet - so the chain reaches current rules (v20) by block 65. The genesis
+// block and block 1 (the premine) stay on v7, exactly as in Wownero.
 const hardfork_t mainnet_hard_forks[] = {
   { 7, 1, 0, 1519605000 },
-  { 8, 6969, 0, 1524214739 },
-  { 9, 53666, 0, 1538689773 },
-  { 10, 63469, 0, 1541700352 },
-  { 11, 81769, 0, 1549238400 },
-  { 12, 82069, 0, 1549318761 },
-  { 13, 114969, 0, 1559292691 },
-  { 14, 115257, 0, 1559292774 },
-  { 15, 160777, 0, 1573280497 },
-  { 16, 253999, 0, 1600576508 },
-  { 17, 254287, 0, 1600576524 },
-  { 18, 331170, 0, 1623245591 },
-  { 19, 331458, 0, 1624793373 },
-  { 20, 514000, 0, 1677222289 },
+  { 8, 5, 0, 1524214739 },
+  { 9, 10, 0, 1538689773 },
+  { 10, 15, 0, 1541700352 },
+  { 11, 20, 0, 1549238400 },
+  { 12, 25, 0, 1549318761 },
+  { 13, 30, 0, 1559292691 },
+  { 14, 35, 0, 1559292774 },
+  { 15, 40, 0, 1573280497 },
+  { 16, 45, 0, 1600576508 },
+  { 17, 50, 0, 1600576524 },
+  { 18, 55, 0, 1623245591 },
+  { 19, 60, 0, 1624793373 },
+  { 20, 65, 0, 1677222289 },
 };
 const size_t num_mainnet_hard_forks = sizeof(mainnet_hard_forks) / sizeof(mainnet_hard_forks[0]);
 const uint64_t mainnet_hard_fork_version_1_till = 0;

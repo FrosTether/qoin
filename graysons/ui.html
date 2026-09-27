@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Graysons Wallet</title>
+<link rel="icon" href="/icon.svg">
+<style>
+:root {
+  --bg: #eef0f2; --panel: #ffffff; --panel-2: #f6f7f8; --line: #d9dde1;
+  --text: #1d2226; --muted: #626b73; --accent: #4a5561; --accent-text: #fff;
+  --frost: #1d7fa6; --frost-soft: #e2f2f8; --good: #217a4b; --bad: #b3261e; --warn: #8a5a00;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181b; --panel: #1e2226; --panel-2: #262b30; --line: #343a40;
+    --text: #e6e8ea; --muted: #9aa3ab; --accent: #aeb7c0; --accent-text: #15181b;
+    --frost: #6cc7ea; --frost-soft: #16323d; --good: #5fcf8f; --bad: #ff8a80; --warn: #e6b450;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.hidden { display: none !important; }
+.mono { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+.muted { color: var(--muted); }
+h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+h2 { font-size: 20px; } h3 { font-size: 15px; }
+
+/* shell */
+.app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+nav { background: var(--panel); border-right: 1px solid var(--line); padding: 20px 12px; display: flex; flex-direction: column; gap: 4px; }
+.brand { display: flex; gap: 10px; align-items: center; padding: 0 8px 18px; }
+.brand img { width: 34px; height: 34px; }
+.brand b { display: block; font-size: 16px; }
+.brand span { font-size: 12px; color: var(--muted); }
+nav a { padding: 9px 12px; border-radius: 8px; color: var(--text); text-decoration: none; }
+nav a:hover { background: var(--panel-2); }
+nav a.on { background: var(--accent); color: var(--accent-text); }
+nav a.frost.on { background: var(--frost); color: #fff; }
+nav .spacer { flex: 1; }
+main { padding: 28px clamp(16px, 4vw, 44px); max-width: 980px; width: 100%; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); font-size: 13px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.dot.good { background: var(--good); } .dot.bad { background: var(--bad); } .dot.warn { background: var(--warn); }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.stat .label { font-size: 13px; color: var(--muted); }
+.stat .value { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat .value small { font-size: 14px; color: var(--muted); font-weight: 500; }
+
+label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+input[type=text], input[type=password], input[type=number], textarea, select {
+  width: 100%; padding: 9px 11px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; }
+textarea { min-height: 84px; resize: vertical; }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.btn { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
+.btn:hover { filter: brightness(0.97); }
+.btn.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.btn.frost { background: var(--frost); color: #fff; border-color: var(--frost); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.msg { margin-top: 12px; font-size: 14px; }
+.msg.err { color: var(--bad); } .msg.ok { color: var(--good); }
+.copy { cursor: pointer; }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 500; font-size: 13px; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.in { color: var(--good); } .out { color: var(--text); }
+.tag { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); }
+.tag.frost { background: var(--frost-soft); color: var(--frost); border-color: transparent; }
+
+/* unlock screen */
+.gate { min-height: 100vh; display: grid; place-items: center; padding: 16px; }
+.gate .card { width: min(460px, 100%); }
+.tabs { display: flex; gap: 4px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.tabs button { background: none; border: none; padding: 8px 12px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button.on { color: var(--text); border-color: var(--accent); }
+
+/* frostoise */
+.frost-hero { background: linear-gradient(135deg, var(--frost-soft), var(--panel)); border-color: var(--frost); }
+.frost-hero h2 { color: var(--frost); display: flex; align-items: center; gap: 10px; }
+.hash { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--frost); }
+
+.seedbox { background: var(--panel-2); border: 1px dashed var(--warn); border-radius: 8px; padding: 14px; font-family: var(--mono); line-height: 1.8; word-spacing: 4px; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; padding: 16px; z-index: 10; }
+.modal .card { width: min(560px, 100%); max-height: 90vh; overflow: auto; }
+
+@media (max-width: 720px) {
+  .app { grid-template-columns: 1fr; }
+  nav { flex-direction: row; overflow-x: auto; padding: 10px; border-right: none; border-bottom: 1px solid var(--line); }
+  .brand { padding: 0 8px 0 0; } .brand div { display: none; } nav .spacer { display: none; }
+  nav a { white-space: nowrap; }
+  .hide-sm { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============ unlock / create / restore ============ -->
+<section id="gate" class="gate hidden">
+  <div class="card">
+    <div class="brand"><img src="/icon.svg" alt=""><div><b>Graysons Wallet</b><span>for Qoin</span></div></div>
+    <div class="tabs">
+      <button data-gate="open" class="on">Open</button>
+      <button data-gate="create">Create</button>
+      <button data-gate="restore">Restore</button>
+    </div>
+    <form id="f-open" data-pane="open">
+      <label for="o-name">Wallet</label>
+      <select id="o-name"></select>
+      <label for="o-pass">Password</label>
+      <input id="o-pass" type="password" autocomplete="current-password">
+      <div class="row"><button class="btn primary" type="submit">Open wallet</button></div>
+    </form>
+    <form id="f-create" data-pane="create" class="hidden">
+      <label for="c-name">Wallet name</label>
+      <input id="c-name" type="text" placeholder="e.g. main" autocomplete="off">
+      <label for="c-pass">Password</label>
+      <input id="c-pass" type="password" autocomplete="new-password">
+      <label for="c-pass2">Repeat password</label>
+      <input id="c-pass2" type="password" autocomplete="new-password">
+      <div class="row"><button class="btn primary" type="submit">Create wallet</button></div>
+    </form>
+    <form id="f-restore" data-pane="restore" class="hidden">
+      <label for="r-name">Wallet name</label>
+      <input id="r-name" type="text" autocomplete="off">
+      <label for="r-seed">Seed words</label>
+      <textarea id="r-seed" spellcheck="false" autocomplete="off"></textarea>
+      <label for="r-height">Restore from block height (0 scans everything)</label>
+      <input id="r-height" type="number" min="0" value="0">
+      <label for="r-pass">New password</label>
+      <input id="r-pass" type="password" autocomplete="new-password">
+      <div class="row"><button class="btn primary" type="submit">Restore wallet</button></div>
+    </form>
+    <div id="gate-msg" class="msg"></div>
+    <p class="muted" id="gate-node" style="font-size:13px;margin-top:16px"></p>
+  </div>
+</section>
+
+<!-- ============ main app ============ -->
+<div id="app" class="app hidden">
+  <nav>
+    <div class="brand"><img src="/icon.svg" alt=""><div><b>Graysons</b><span id="nav-wallet">wallet</span></div></div>
+    <a href="#overview">Overview</a>
+    <a href="#send">Send</a>
+    <a href="#receive">Receive</a>
+    <a href="#history">History</a>
+    <a href="#frostoise" class="frost">Frostoise miner</a>
+    <a href="#node">Node</a>
+    <span class="spacer"></span>
+    <a href="#" id="lock">Close wallet</a>
+  </nav>
+  <main>
+    <div class="topbar">
+      <h2 id="page-title">Overview</h2>
+      <div class="row" style="margin:0">
+        <span class="pill hidden" id="mine-pill"><span class="dot good"></span><span>Mining</span></span>
+        <span class="pill"><span class="dot" id="node-dot"></span><span id="node-text">Node…</span></span>
+      </div>
+    </div>
+
+    <section data-page="overview">
+      <div class="grid2">
+        <div class="card stat"><div class="label">Balance</div><div class="value"><span id="bal">–</span> <small>QOIN</small></div></div>
+        <div class="card stat"><div class="label">Spendable now</div><div class="value"><span id="unl">–</span> <small>QOIN</small></div>
+          <div class="muted" id="unlock-note" style="font-size:13px"></div></div>
+      </div>
+      <div class="card">
+        <h3>Your primary address</h3>
+        <div class="mono copy" id="addr" title="Click to copy"></div>
+        <div class="muted" style="font-size:13px;margin-top:8px">Wallet synced to block <span id="wh">–</span></div>
+      </div>
+      <div class="card">
+        <h3>Recent activity</h3>
+        <table><tbody id="recent"></tbody></table>
+      </div>
+    </section>
+
+    <section data-page="send" class="hidden">
+      <form class="card" id="f-send">
+        <label for="s-addr">Recipient address</label>
+        <input id="s-addr" type="text" class="mono" autocomplete="off" spellcheck="false">
+        <label for="s-amt">Amount (QOIN)</label>
+        <input id="s-amt" type="text" inputmode="decimal" autocomplete="off">
+        <label for="s-pri">Fee priority</label>
+        <select id="s-pri"><option value="0">Default</option><option value="1">Low</option><option value="2">Normal</option><option value="3">High</option></select>
+        <div class="row"><button class="btn primary" type="submit">Review</button><span class="muted" style="font-size:13px">Spendable: <span id="s-unl">–</span> QOIN</span></div>
+        <div id="send-msg" class="msg"></div>
+      </form>
+      <div class="card hidden" id="send-review">
+        <h3>Confirm transfer</h3>
+        <table><tbody>
+          <tr><th>To</th><td class="mono" id="sr-addr"></td></tr>
+          <tr><th>Amount</th><td id="sr-amt"></td></tr>
+          <tr><th>Network fee</th><td id="sr-fee"></td></tr>
+          <tr><th>Total</th><td><b id="sr-total"></b></td></tr>
+        </tbody></table>
+        <div class="row"><button class="btn primary" id="sr-go">Send now</button><button class="btn" id="sr-cancel">Cancel</button></div>
+      </div>
+    </section>
+
+    <section data-page="receive" class="hidden">
+      <div class="card">
+        <h3>Primary address</h3>
+        <div class="mono copy" id="r-primary" title="Click to copy"></div>
+        <p class="muted" style="font-size:13px">Mining rewards from Frostoise always go here.</p>
+      </div>
+      <div class="card">
+        <h3>Subaddresses</h3>
+        <p class="muted" style="font-size:14px;margin-top:0">Give each payer their own subaddress so payments can't be linked to each other.</p>
+        <table><thead><tr><th>#</th><th>Label</th><th>Address</th></tr></thead><tbody id="subs"></tbody></table>
+        <form class="row" id="f-sub"><input id="sub-label" type="text" placeholder="Label (optional)" style="flex:1;min-width:160px"><button class="btn" type="submit">New subaddress</button></form>
+      </div>
+    </section>
+
+    <section data-page="history" class="hidden">
+      <div class="card" style="overflow-x:auto">
+        <table><thead><tr><th>When</th><th>Type</th><th class="hide-sm">Transaction</th><th style="text-align:right">Amount</th></tr></thead><tbody id="hist"></tbody></table>
+      </div>
+    </section>
+
+    <section data-page="frostoise" class="hidden">
+      <div class="card frost-hero">
+        <h2><img src="/icon.svg" alt="" style="width:28px">Frostoise</h2>
+        <p class="muted" style="margin-top:-6px">Solo-mines Qoin through your own node. Every block is signed with this wallet's key and pays into it.</p>
+        <div class="grid2" style="margin-top:12px">
+          <div class="stat"><div class="label">Hashrate</div><div class="hash"><span id="m-speed">0</span> <small class="muted" style="font-size:16px">H/s</small></div></div>
+          <div class="stat"><div class="label">Status</div><div class="value" id="m-status" style="font-size:22px">Stopped</div>
+            <div class="muted" style="font-size:13px" id="m-eta"></div></div>
+        </div>
+        <label for="m-threads">CPU threads: <b id="m-tval">1</b> of <span id="m-tmax">1</span></label>
+        <input id="m-threads" type="range" min="1" max="1" value="1">
+        <div class="row">
+          <button class="btn frost" id="m-start">Start mining</button>
+          <button class="btn" id="m-stop" disabled>Stop</button>
+        </div>
+        <div id="m-msg" class="msg"></div>
+      </div>
+      <div class="grid2">
+        <div class="card stat"><div class="label">Block reward</div><div class="value"><span id="m-reward">–</span> <small>QOIN</small></div></div>
+        <div class="card stat"><div class="label">Network difficulty</div><div class="value" id="m-diff">–</div></div>
+        <div class="card stat"><div class="label">Blocks you've mined</div><div class="value" id="m-found">0</div></div>
+      </div>
+      <div class="card">
+        <h3>Paying to</h3>
+        <div class="mono" id="m-addr"></div>
+        <p class="muted" style="font-size:13px">Mined coins are locked for a number of blocks before they become spendable. Starting the miner restarts your node once so it can load this wallet's signing key; the key is never written to the command line and its temporary file is deleted as soon as the node is up.</p>
+      </div>
+    </section>
+
+    <section data-page="node" class="hidden">
+      <div class="card">
+        <h3>Qoin node</h3>
+        <table><tbody id="node-table"></tbody></table>
+        <div class="row"><button class="btn" id="n-start">Start node</button><button class="btn danger" id="n-stop">Stop node</button></div>
+        <div id="n-msg" class="msg"></div>
+      </div>
+      <form class="card" id="f-settings">
+        <h3>Network</h3>
+        <label for="n-peers">Peers to connect to (one host:port per line, Qoin P2P port is 45670)</label>
+        <textarea id="n-peers" class="mono" spellcheck="false"></textarea>
+        <label style="display:flex;gap:8px;align-items:center;color:var(--text)"><input type="checkbox" id="n-offline"> Offline (no peers at all - for mining the first blocks alone)</label>
+        <label for="n-bin">Folder with qoind and graysons-wallet-rpc (blank = auto-detect)</label>
+        <input id="n-bin" type="text" class="mono">
+        <div class="row"><button class="btn primary" type="submit">Save</button></div>
+        <div id="set-msg" class="msg"></div>
+      </form>
+      <div class="card">
+        <h3>Recovery seed</h3>
+        <p class="muted" style="font-size:14px;margin-top:0">Anyone with these words can take this wallet's coins.</p>
+        <button class="btn" id="show-seed">Show seed words</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden"><div class="card" id="modal-body"></div></div>
+
+<script>
+const TOKEN = "__GRAYSONS_TOKEN__";
+const $ = (id) => document.getElementById(id);
+let state = null, summary = null, history = [];
+
+async function api(path, body = {}) {
+  const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json", "X-Graysons-Token": TOKEN }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({ error: "Bad response from Graysons" }));
+  if (!r.ok || j.error) throw new Error(j.error || r.statusText);
+  return j;
+}
+function say(el, text, kind) { el.textContent = text || ""; el.className = "msg " + (kind || ""); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function short(s, n = 10) { return s.length > 2 * n + 1 ? s.slice(0, n) + "…" + s.slice(-n) : s; }
+function when(ts) { return ts ? new Date(ts * 1000).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "pending"; }
+async function busy(btn, fn) { btn.disabled = true; try { return await fn(); } finally { btn.disabled = false; } }
+function copyable(el) { el.onclick = () => { navigator.clipboard.writeText(el.textContent); const t = el.title; el.title = "Copied"; setTimeout(() => el.title = t, 1200); }; }
+copyable($("addr")); copyable($("r-primary"));
+
+/* ---------- gate ---------- */
+document.querySelectorAll("[data-gate]").forEach(b => b.onclick = () => {
+  document.querySelectorAll("[data-gate]").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== b.dataset.gate));
+  say($("gate-msg"), "");
+});
+$("f-open").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => {
+  say($("gate-msg"), "Opening…");
+  try { await api("/api/wallet/open", { name: $("o-name").value, password: $("o-pass").value }); $("o-pass").value = ""; say($("gate-msg"), ""); await refresh(); }
+  catch (err) { say($("gate-msg"), err.message, "err"); }
+}); };
+$("f-create").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => {
+  if ($("c-pass").value !== $("c-pass2").value) return say($("gate-msg"), "Passwords don't match", "err");
+  if ($("c-pass").value.length < 8) return say($("gate-msg"), "Use a password of at least 8 characters", "err");
+  say($("gate-msg"), "Creating…");
+  try { const r = await api("/api/wallet/create", { name: $("c-name").value, password: $("c-pass").value });
+    $("c-pass").value = $("c-pass2").value = ""; say($("gate-msg"), ""); showSeed(r.seed, true); await refresh(); }
+  catch (err) { say($("gate-msg"), err.message, "err"); }
+}); };
+$("f-restore").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => {
+  say($("gate-msg"), "Restoring - this can take a while…");
+  try { await api("/api/wallet/restore", { name: $("r-name").value, password: $("r-pass").value, seed: $("r-seed").value, height: $("r-height").value });
+    $("r-seed").value = $("r-pass").value = ""; say($("gate-msg"), ""); await refresh(); }
+  catch (err) { say($("gate-msg"), err.message, "err"); }
+}); };
+
+function showSeed(seed, fresh) {
+  $("modal-body").innerHTML = `<h2>${fresh ? "Write down your seed" : "Recovery seed"}</h2>
+    <p class="muted">These ${seed.split(/\s+/).length} words are the only way to recover this wallet. Write them on paper and keep them offline. Never type them into a website.</p>
+    <div class="seedbox">${esc(seed)}</div>
+    <div class="row"><button class="btn primary" id="seed-ok">${fresh ? "I've written them down" : "Hide"}</button></div>`;
+  $("modal").classList.remove("hidden");
+  $("seed-ok").onclick = () => { $("modal").classList.add("hidden"); $("modal-body").innerHTML = ""; };
+}
+
+/* ---------- navigation ---------- */
+const titles = { overview: "Overview", send: "Send", receive: "Receive", history: "History", frostoise: "Frostoise miner", node: "Node" };
+function route() {
+  const page = (location.hash || "#overview").slice(1);
+  const p = titles[page] ? page : "overview";
+  document.querySelectorAll("[data-page]").forEach(s => s.classList.toggle("hidden", s.dataset.page !== p));
+  document.querySelectorAll("nav a[href^='#']").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + p));
+  $("page-title").textContent = titles[p];
+  document.title = p === "frostoise" ? "Frostoise · Qoin miner" : "Graysons Wallet";
+  if (p === "history") loadHistory();
+}
+window.addEventListener("hashchange", route);
+$("lock").onclick = async (e) => { e.preventDefault(); await api("/api/wallet/close").catch(() => {}); summary = null; await refresh(); };
+
+/* ---------- data ---------- */
+function renderNode(n, err) {
+  const dot = $("node-dot"), t = $("node-text");
+  if (!n.running) { dot.className = "dot bad"; t.textContent = err ? "Node error" : "Node starting…"; }
+  else if (n.offline) { dot.className = "dot warn"; t.textContent = `Offline · block ${n.height}`; }
+  else if (!n.synced && n.target_height > n.height) { dot.className = "dot warn"; t.textContent = `Syncing ${n.height}/${n.target_height}`; }
+  else { dot.className = "dot good"; t.textContent = `Block ${n.height} · ${n.peers_in + n.peers_out} peers`; }
+  const rows = n.running ? [
+    ["Status", n.offline ? "Running offline" : (n.synced ? "Running, synced" : "Running")],
+    ["Height", n.height], ["Peers", `${n.peers_out} out / ${n.peers_in} in`], ["Difficulty", n.difficulty],
+    ["Started by Graysons", n.managed ? "yes" : "no (external node)"], ["Mining key loaded", n.has_mining_key ? "yes" : "no"],
+    ["Version", n.version]] : [["Status", err || "Not running"]];
+  $("node-table").innerHTML = rows.map(([k, v]) => `<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("");
+  $("gate-node").textContent = n.running ? `Node at block ${n.height}` : (err || "Starting the Qoin node…");
+}
+
+function renderMining(m) {
+  $("mine-pill").classList.toggle("hidden", !m.active);
+  $("m-speed").textContent = m.active ? Math.round(m.speed || 0) : 0;
+  $("m-status").textContent = m.active ? "Mining" : "Stopped";
+  $("m-status").style.color = m.active ? "var(--frost)" : "";
+  $("m-start").disabled = !!m.active; $("m-stop").disabled = !m.active;
+  if (m.active && m.block_reward !== "0") $("m-reward").textContent = m.block_reward;
+  if (m.difficulty) $("m-diff").textContent = Number(m.difficulty).toLocaleString();
+  if (m.active && m.speed > 0 && m.difficulty) {
+    const s = m.difficulty / m.speed;
+    const h = s / 3600;
+    $("m-eta").textContent = "Expected time per block at this rate: " + (h < 1 ? Math.round(s / 60) + " min" : h < 48 ? h.toFixed(1) + " h" : (h / 24).toFixed(1) + " days");
+  } else $("m-eta").textContent = "";
+}
+
+async function refresh() {
+  try { state = await api("/api/state"); } catch (e) { return; }
+  renderNode(state.node, state.node_error);
+  const tmax = state.cpu_count; $("m-tmax").textContent = tmax; $("m-threads").max = tmax;
+  if (!$("m-threads").dataset.touched) { $("m-threads").value = Math.min(state.settings.mining_threads || 1, tmax); $("m-tval").textContent = $("m-threads").value; }
+  if (!$("f-settings").dataset.loaded) {
+    $("n-peers").value = (state.settings.peers || []).join("\n"); $("n-offline").checked = !!state.settings.offline; $("n-bin").value = state.settings.bin_dir || "";
+    $("f-settings").dataset.loaded = 1;
+  }
+  renderMining(state.mining);
+  if (!state.wallet_open) {
+    $("app").classList.add("hidden"); $("gate").classList.remove("hidden");
+    const sel = $("o-name"), cur = sel.value;
+    sel.innerHTML = state.wallets.map(w => `<option>${esc(w)}</option>`).join("");
+    if (state.wallets.includes(cur)) sel.value = cur;
+    if (!state.wallets.length && !$("f-open").dataset.auto) { $("f-open").dataset.auto = 1; document.querySelector("[data-gate=create]").click(); }
+    return;
+  }
+  $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+  try { summary = await api("/api/wallet/summary"); } catch (e) { return; }
+  $("nav-wallet").textContent = summary.name;
+  $("bal").textContent = summary.balance; $("unl").textContent = summary.unlocked; $("s-unl").textContent = summary.unlocked;
+  $("unlock-note").textContent = summary.blocks_to_unlock ? `More unlocks in ${summary.blocks_to_unlock} blocks` : "";
+  $("addr").textContent = summary.address; $("r-primary").textContent = summary.address; $("m-addr").textContent = summary.address;
+  $("wh").textContent = summary.wallet_height;
+  $("subs").innerHTML = summary.addresses.filter(a => a.index > 0).map(a =>
+    `<tr><td>${a.index}</td><td>${esc(a.label || "")}</td><td class="mono copy" title="Click to copy">${esc(a.address)}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet</td></tr>`;
+  $("subs").querySelectorAll(".copy").forEach(copyable);
+  loadHistory(true);
+}
+
+async function loadHistory(quiet) {
+  if (!state || !state.wallet_open) return;
+  try { history = (await api("/api/wallet/history")).rows; } catch (e) { return; }
+  const label = (r) => r.coinbase ? `<span class="tag frost">mined</span>` : `<span class="tag">${{ in: "received", out: "sent", pending: "sending", pool: "incoming", failed: "failed" }[r.kind]}</span>`;
+  const amt = (r) => `<span class="${r.kind === "in" || r.kind === "pool" ? "in" : "out"}">${r.kind === "in" || r.kind === "pool" ? "+" : "−"}${esc(r.amount)}</span>`;
+  $("hist").innerHTML = history.map(r => `<tr><td>${when(r.timestamp)}</td><td>${label(r)}</td><td class="mono hide-sm" title="${esc(r.txid)}">${short(r.txid)}</td><td class="num">${amt(r)}</td></tr>`).join("")
+    || `<tr><td colspan="4" class="muted">No transactions yet</td></tr>`;
+  $("recent").innerHTML = history.slice(0, 5).map(r => `<tr><td>${when(r.timestamp)}</td><td>${label(r)}</td><td class="num">${amt(r)}</td></tr>`).join("")
+    || `<tr><td class="muted">Nothing yet. Receive some QOIN or start Frostoise.</td></tr>`;
+  $("m-found").textContent = history.filter(r => r.coinbase).length;
+}
+
+/* ---------- send ---------- */
+let pendingId = null;
+$("f-send").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => {
+  say($("send-msg"), "Building transaction…");
+  try {
+    const r = await api("/api/wallet/preview", { address: $("s-addr").value, amount: $("s-amt").value, priority: $("s-pri").value });
+    pendingId = r.id; say($("send-msg"), "");
+    $("sr-addr").textContent = r.address; $("sr-amt").textContent = r.amount + " QOIN"; $("sr-fee").textContent = r.fee + " QOIN"; $("sr-total").textContent = r.total + " QOIN";
+    $("send-review").classList.remove("hidden");
+  } catch (err) { say($("send-msg"), err.message, "err"); }
+}); };
+$("sr-cancel").onclick = () => { pendingId = null; $("send-review").classList.add("hidden"); };
+$("sr-go").onclick = (e) => busy(e.target, async () => {
+  try { const r = await api("/api/wallet/confirm", { id: pendingId });
+    $("send-review").classList.add("hidden"); $("s-addr").value = $("s-amt").value = "";
+    say($("send-msg"), "Sent. Transaction " + r.txid, "ok"); refresh(); }
+  catch (err) { $("send-review").classList.add("hidden"); say($("send-msg"), err.message, "err"); }
+});
+
+/* ---------- receive ---------- */
+$("f-sub").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => { await api("/api/wallet/new_address", { label: $("sub-label").value }).catch(() => {}); $("sub-label").value = ""; refresh(); }); };
+
+/* ---------- frostoise ---------- */
+$("m-threads").oninput = () => { $("m-threads").dataset.touched = 1; $("m-tval").textContent = $("m-threads").value; };
+$("m-start").onclick = (e) => busy(e.target, async () => {
+  say($("m-msg"), "Loading this wallet's key into the node and starting the miner…");
+  try { renderMining(await api("/api/mine/start", { threads: $("m-threads").value })); say($("m-msg"), "Frostoise is mining.", "ok"); }
+  catch (err) { say($("m-msg"), err.message, "err"); }
+  refresh();
+});
+$("m-stop").onclick = (e) => busy(e.target, async () => {
+  try { renderMining(await api("/api/mine/stop")); say($("m-msg"), "Stopped."); } catch (err) { say($("m-msg"), err.message, "err"); }
+});
+
+/* ---------- node ---------- */
+$("n-start").onclick = (e) => busy(e.target, async () => { say($("n-msg"), "Starting…"); try { await api("/api/node/start"); say($("n-msg"), ""); } catch (err) { say($("n-msg"), err.message, "err"); } refresh(); });
+$("n-stop").onclick = (e) => busy(e.target, async () => { say($("n-msg"), "Stopping…"); try { await api("/api/node/stop"); say($("n-msg"), "Node stopped."); } catch (err) { say($("n-msg"), err.message, "err"); } refresh(); });
+$("f-settings").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => {
+  try { const r = await api("/api/settings", { peers: $("n-peers").value.split("\n"), offline: $("n-offline").checked, bin_dir: $("n-bin").value }); say($("set-msg"), r.note, "ok"); }
+  catch (err) { say($("set-msg"), err.message, "err"); }
+}); };
+$("show-seed").onclick = (e) => busy(e.target, async () => {
+  if (!confirm("Show your seed words on screen? Make sure nobody can see your display.")) return;
+  try { showSeed((await api("/api/wallet/seed")).seed, false); } catch (err) { alert(err.message); }
+});
+
+route();
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

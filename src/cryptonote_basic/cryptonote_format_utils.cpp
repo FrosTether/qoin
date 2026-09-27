@@ -1180,7 +1180,7 @@ namespace cryptonote
     switch (decimal_point)
     {
       case 11:
-        return "wownero";
+        return "qoin";
       case 8:
         return "verywow";
       case 5:
