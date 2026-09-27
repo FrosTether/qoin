@@ -37,6 +37,7 @@
 
 #include "int-util.h"
 #include "crypto/hash.h"
+#include "cryptonote_basic/qoin_asert.h"
 #include "cryptonote_config.h"
 #include "difficulty.h"
 
@@ -464,5 +465,41 @@ namespace cryptonote {
     if(res > max128bit)
         return 0; // to behave like previous implementation, may be better return max128bit?
     return res.convert_to<difficulty_type>();
+  }
+
+  // Qoin: Bitcoin Cash's aserti3-2d (its fixed-point 2^x approximation and constants), in
+  // difficulty form (difficulty = 1/target), anchored at block QOIN_ASERT_ANCHOR_HEIGHT:
+  //   next = anchor * 2^((300 * (tip - anchor_height + 1) - (tip_time - anchor_parent_time)) / half_life)
+  // Blocks slower than 300 s lower it, faster ones raise it. Needs no window of earlier blocks.
+  difficulty_type next_difficulty_asert(uint64_t tip_height, uint64_t tip_timestamp) {
+    using boost::multiprecision::int256_t;
+    using boost::multiprecision::uint256_t;
+    const int64_t height_delta = static_cast<int64_t>(tip_height) - QOIN_ASERT_ANCHOR_HEIGHT;
+    const int64_t ideal = static_cast<int64_t>(DIFFICULTY_TARGET_V2) * (height_delta + 1);
+    const int64_t actual = static_cast<int64_t>(tip_timestamp) - QOIN_ASERT_ANCHOR_PARENT_TIMESTAMP;
+    // 16.16 fixed-point exponent. half_life = pi hours = QOIN_PI_E11 * 3600 / 10^11 seconds.
+    // Truncating division, then an arithmetic shift, exactly as BCH does.
+    const int256_t numerator = int256_t(ideal - actual) * 65536 * int256_t(100000000000LL);
+    const int256_t denominator = int256_t(QOIN_PI_E11) * 3600;
+    const int64_t exponent = (numerator / denominator).convert_to<int64_t>();
+    int64_t shifts = exponent >> 16;
+    const uint256_t frac = static_cast<uint16_t>(exponent);
+    const uint256_t poly = uint256_t(195766423245049ull) * frac
+                         + uint256_t(971821376ull) * frac * frac
+                         + uint256_t(5127ull) * frac * frac * frac
+                         + (uint256_t(1) << 47);
+    const uint64_t factor = 65536 + (poly >> 48).convert_to<uint64_t>();
+    const uint64_t anchor = QOIN_ASERT_BCH_HEIGHT * 10ull / (QOIN_ASERT_BELLEVUE_TEMP_F_X10 * QOIN_ASERT_DIVISOR);
+    uint256_t next = uint256_t(anchor) * factor;
+    shifts -= 16;
+    if (shifts <= 0)
+      next = shifts < -255 ? uint256_t(0) : uint256_t(next >> static_cast<unsigned>(-shifts));
+    else
+      next = shifts > 200 ? max128bit : uint256_t(next << static_cast<unsigned>(shifts));
+    if (next < 1)
+      next = 1;
+    if (next > max128bit)
+      next = max128bit;
+    return next.convert_to<difficulty_type>();
   }
 }

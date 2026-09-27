@@ -44,6 +44,7 @@
 #include "cryptonote_basic/events.h"
 #include "cryptonote_config.h"
 #include "cryptonote_basic/miner.h"
+#include "cryptonote_basic/qoin_asert.h"
 #include "hardforks/hardforks.h"
 #include "misc_language.h"
 #include "profile_tools.h"
@@ -929,7 +930,9 @@ difficulty_type Blockchain::get_difficulty_for_next_block(const network_type net
   size_t target = get_difficulty_target();
   uint64_t HEIGHT = m_db->height();
   difficulty_type diff;
-  if (version >= 20) {
+  if (m_nettype == MAINNET && height >= QOIN_ASERT_HEIGHT) {
+    diff = next_difficulty_asert(height - 1, m_db->get_block_timestamp(height - 1));
+  } else if (version >= 20) {
     diff = next_difficulty_v6(timestamps, difficulties, target, HEIGHT, m_nettype);
   } else if (version <= 17 && version >= 11) {
     diff = next_difficulty_v5(timestamps, difficulties, HEIGHT, m_nettype);
@@ -1001,7 +1004,9 @@ size_t Blockchain::recalculate_difficulties(boost::optional<uint64_t> start_heig
     size_t target = get_ideal_hard_fork_version(height) < 2 ? DIFFICULTY_TARGET_V1 : DIFFICULTY_TARGET_V2;
     uint64_t HEIGHT = m_db->height();
     difficulty_type recalculated_diff;
-    if (version >= 20) {
+    if (m_nettype == MAINNET && height >= QOIN_ASERT_HEIGHT) {
+      recalculated_diff = next_difficulty_asert(height - 1, m_db->get_block_timestamp(height - 1));
+    } else if (version >= 20) {
       recalculated_diff = next_difficulty_v6(timestamps, difficulties, target, HEIGHT, m_nettype);
     } else if (version <= 17 && version >= 11) {
       recalculated_diff = next_difficulty_v5(timestamps, difficulties, HEIGHT, m_nettype);
@@ -1322,7 +1327,16 @@ difficulty_type Blockchain::get_next_difficulty_for_alternative_chain(const std:
   // calculate the difficulty target for the block and return it
   uint64_t HEIGHT = m_db->height();
   difficulty_type next_diff;
-  if (version >= 20) {
+  if (m_nettype == MAINNET && bei.height >= QOIN_ASERT_HEIGHT) {
+    uint64_t parent_timestamp;
+    if (alt_chain.empty()) {
+      CRITICAL_REGION_LOCAL(m_blockchain_lock);
+      parent_timestamp = m_db->get_block_timestamp(bei.height - 1);
+    } else {
+      parent_timestamp = alt_chain.back().bl.timestamp;
+    }
+    next_diff = next_difficulty_asert(bei.height - 1, parent_timestamp);
+  } else if (version >= 20) {
     next_diff = next_difficulty_v6(timestamps, cumulative_difficulties, target, HEIGHT, m_nettype);
   } else if (version <= 17 && version >= 11) {
     next_diff = next_difficulty_v5(timestamps, cumulative_difficulties, HEIGHT, m_nettype);
