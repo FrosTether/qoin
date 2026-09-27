@@ -1,0 +1,25 @@
+{
+  "chain": "frostchain",
+  "height": 1,
+  "time": {
+    "local": "1991-08-24T00:00:00-04:00",
+    "zone": "America/New_York",
+    "epoch": 683006400
+  },
+  "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "container": "MyDoge.frostchain/01",
+  "container_sha256": "f3baf44117e26a5e5847c7ecd70f8b39d119fb76247024cba8fd014bfaff1016",
+  "payload_sha256": null,
+  "owner": {
+    "mydoge_profile": "https://mydoge.com/frostcoin",
+    "handle": "frostcoin",
+    "doge_address": "DJTDVRxJGtcuSsxwT7GHbkdCabqaTa1C7s"
+  },
+  "block_hash": "587c456ba178ee71d0303c0eba2d8513328ea92b2abecc4382a32c6fd7ae4aa2",
+  "anchor": {
+    "chain": "bitcoin-cash",
+    "op_return_hex": "46524f5354434841494e0100000001587c456ba178ee71d0303c0eba2d8513328ea92b2abecc4382a32c6fd7ae4aa2",
+    "txid": null,
+    "block_height": null
+  }
+}

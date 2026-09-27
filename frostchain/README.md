@@ -20,3 +20,20 @@ read, never changed. Pure Python, no dependencies.
 
 Send a Doge transaction carrying a container's `container_sha256`, then write
 the txid and block height into that container's `anchor` slot.
+
+## Block records and the BCH anchor
+
+`bch_anchor.py` turns a container into a frostchain block record and prints the
+Bitcoin Cash OP_RETURN that anchors it. Block times are America/New_York, not UTC.
+
+```bash
+python3 frostchain/bch_anchor.py 1 frostchain/container_01.frostchain --time 1991-08-24T00:00:00
+```
+
+The OP_RETURN payload is `FROSTCHAIN` + version byte + 4-byte height + the
+32-byte block hash (47 bytes). Broadcast it from your own BCH wallet, then write
+the txid and BCH block height into the record's `anchor` slot. Re-run the
+script if the container changes after anchoring; the hash must match.
+
+`block_0001.json` is block 1, dated 1991-08-24 00:00 Eastern, anchoring
+`MyDoge.frostchain/01`.
