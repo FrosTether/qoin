@@ -19,6 +19,9 @@ import json, os, sys, time
 import requests
 from web3 import Web3
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "graysons"))
+import qoin_number   # number addresses: a Frostoise address written in digits only
+
 # ---------- config ----------
 ETC_RPC        = os.getenv("ETC_RPC", "https://etc.rivet.link")
 WALLET_RPC     = os.getenv("FROSTOISE_WALLET_RPC", "http://127.0.0.1:45673/json_rpc")   # wallet RPC; run it with --rpc-bind-port 45673   
@@ -73,7 +76,11 @@ def register(eth_addr):
     eth_addr = eth_addr.removeprefix("FPu")
     eth_addr = Web3.to_checksum_address(eth_addr)
     res = rpc("create_address", {"account_index": 0, "label": eth_addr})
-    print(f"Deposit Frostoise to:\n{res['address']}\n→ minted as QOIN to {eth_addr}")
+    try:
+        number = "\nor its number address:\n" + qoin_number.group(qoin_number.to_number(res["address"]))
+    except qoin_number.NumberError:
+        number = ""
+    print(f"Deposit Frostoise to:\n{res['address']}{number}\n→ minted as QOIN to {eth_addr}")
 
 # ---------- Frostoise -> ETC ----------
 def mint_deposits(w3, c, acct):
@@ -114,7 +121,10 @@ def pay_burns(w3, c, state):
             if key in state["paid_burns"]:
                 continue
             atomic = ev.args.amount // SCALE
-            dest = ev.args.frostoiseAddress
+            try:
+                dest = qoin_number.as_address(ev.args.frostoiseAddress)   # a number address works too
+            except qoin_number.NumberError:
+                dest = ev.args.frostoiseAddress                           # mistyped: validate_address refuses it
             if atomic == 0 or not rpc("validate_address", {"address": dest}).get("valid"):
                 print(f"skip burn {key}: bad amount or address {dest!r} — refund by hand")
             else:

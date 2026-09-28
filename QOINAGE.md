@@ -26,6 +26,8 @@ The sine wave is credited to **Fat Productions** (change it with `--credit`).
 
 In Graysons Wallet, **Qoinage → Open Qoinage** opens the listening page with your wallet's address already filled in.
 
+Listeners can paste their primary address or its number address (the digits-only form Graysons shows, starting with 9999). Both are the same address, so they share one daily limit.
+
 | Option | Default | Meaning |
 |---|---|---|
 | `--reward` | 13.37 | QOIN per finished listen |

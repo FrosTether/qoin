@@ -2,9 +2,9 @@
 """Qoinage - listen to five minutes of 741 Hz, earn 13.37 QOIN.
 
 The Qoinage vault is a small web page plus a payout loop. Anyone with a Qoin
-address opens the page, listens to a five-minute 741 Hz sine wave (credited to
-Fat Productions), and earns 13.37 QOIN. Rewards are paid in batches from a wallet
-you funded, such as the one that mined the block-1 premine.
+address (or its number address) opens the page, listens to a five-minute 741 Hz
+sine wave (credited to Fat Productions), and earns 13.37 QOIN. Rewards are paid
+in batches from a wallet you funded, such as the one that mined the block-1 premine.
 
     python3 qoinage.py --wallet vault                   # asks for the vault's password
     python3 qoinage.py --wallet vault --bind 0.0.0.0    # let other devices on your network in
@@ -38,6 +38,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import qoin_backend as qb
+import qoin_number
 
 HERE = Path(__file__).resolve().parent
 BOOK_FILE = qb.QOIN_DIR / "qoinage" / "ledger.jsonl"
@@ -294,7 +295,11 @@ class Qoinage:
                 del self.starts[ip]
 
     def start(self, address, ip):
-        address = (address or "").strip()
+        try:
+            # A number address becomes the usual form first, so both count as one address for the limits.
+            address = qoin_number.as_address(address)
+        except qoin_number.NumberError as e:
+            raise qb.ApiError(str(e))
         if not ADDRESS_RE.fullmatch(address):
             raise qb.ApiError("That doesn't look like a Qoin address")
         t, now = self.clock(), self.wall()

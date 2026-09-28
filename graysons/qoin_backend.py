@@ -11,6 +11,7 @@ is embedded in the page, so other websites open in the browser cannot drive the 
 """
 import argparse
 import decimal
+import functools
 import hashlib
 import http.client
 import json
@@ -31,6 +32,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import humm
+import qoin_number
+from qoin_number import keccak256
 
 HERE = Path(__file__).resolve().parent
 QOIN_DIR = Path(os.environ.get("QOIN_DATA_DIR", Path.home() / ".qoin"))
@@ -55,53 +58,9 @@ HUMM_VALID_S = 120          # a good hum covers one send (or turning the lock of
 
 
 # ---------------------------------------------------------------------------
-# Keccak-256 (original padding, as used by CryptoNote - not SHA3-256) and sc_reduce32,
-# used to check that a wallet's view key is derived from its spend key. The node's
-# miner signs blocks assuming view = H(spend); a wallet that breaks that would have
-# every block it finds rejected.
-_RC = [
-    0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
-    0x000000000000808B, 0x0000000080000001, 0x8000000080008081, 0x8000000000008009,
-    0x000000000000008A, 0x0000000000000088, 0x0000000080008009, 0x000000008000000A,
-    0x000000008000808B, 0x800000000000008B, 0x8000000000008089, 0x8000000000008003,
-    0x8000000000008002, 0x8000000000000080, 0x000000000000800A, 0x800000008000000A,
-    0x8000000080008081, 0x8000000000008080, 0x0000000080000001, 0x8000000080008008,
-]
-_ROT = [[0, 36, 3, 41, 18], [1, 44, 10, 45, 2], [62, 6, 43, 15, 61],
-        [28, 55, 25, 21, 56], [27, 20, 39, 8, 14]]
-_M64 = (1 << 64) - 1
-
-
-def _keccak_f(a):
-    for rc in _RC:
-        c = [a[x][0] ^ a[x][1] ^ a[x][2] ^ a[x][3] ^ a[x][4] for x in range(5)]
-        d = [c[(x - 1) % 5] ^ (((c[(x + 1) % 5] << 1) | (c[(x + 1) % 5] >> 63)) & _M64) for x in range(5)]
-        a = [[a[x][y] ^ d[x] for y in range(5)] for x in range(5)]
-        b = [[0] * 5 for _ in range(5)]
-        for x in range(5):
-            for y in range(5):
-                r = _ROT[x][y]
-                v = a[x][y]
-                b[y][(2 * x + 3 * y) % 5] = ((v << r) | (v >> (64 - r))) & _M64 if r else v
-        a = [[b[x][y] ^ ((~b[(x + 1) % 5][y]) & b[(x + 2) % 5][y]) for y in range(5)] for x in range(5)]
-        a[0][0] ^= rc
-    return a
-
-
-def keccak256(data: bytes) -> bytes:
-    rate = 136
-    msg = bytearray(data) + b"\x01"
-    msg += b"\x00" * (-len(msg) % rate)
-    msg[-1] |= 0x80
-    a = [[0] * 5 for _ in range(5)]
-    for off in range(0, len(msg), rate):
-        block = msg[off:off + rate]
-        for i in range(rate // 8):
-            a[i % 5][i // 5] ^= int.from_bytes(block[i * 8:i * 8 + 8], "little")
-        a = _keccak_f(a)
-    return b"".join(a[i % 5][i // 5].to_bytes(8, "little") for i in range(4))
-
-
+# sc_reduce32(keccak256(spend)), used to check that a wallet's view key is derived from
+# its spend key. The node's miner signs blocks assuming view = H(spend); a wallet that
+# breaks that would have every block it finds rejected.
 _L = 2 ** 252 + 27742317777372353535851937790883648493
 
 
@@ -127,6 +86,15 @@ def parse_qoin(text: str) -> int:
     if atomic != atomic.to_integral_value():
         raise ApiError("Qoin has at most 11 decimal places")
     return int(atomic)
+
+
+@functools.lru_cache(maxsize=4096)   # the page asks again every few seconds
+def number_address(address: str) -> str:
+    """The number address (digits only, in blocks of five) for a Qoin address, or "" if it has none."""
+    try:
+        return qoin_number.group(qoin_number.to_number(address))
+    except qoin_number.NumberError:
+        return ""
 
 
 class ApiError(Exception):
@@ -435,8 +403,9 @@ class Qoin:
         return {"name": self.wallet_name,
                 "balance": fmt_qoin(bal["balance"]), "unlocked": fmt_qoin(bal["unlocked_balance"]),
                 "blocks_to_unlock": bal.get("blocks_to_unlock", 0),
-                "address": addr["address"],
-                "addresses": [{"index": a["address_index"], "address": a["address"], "label": a.get("label", ""),
+                "address": addr["address"], "number": number_address(addr["address"]),
+                "addresses": [{"index": a["address_index"], "address": a["address"],
+                               "number": number_address(a["address"]), "label": a.get("label", ""),
                                "used": a.get("used", False)} for a in addr["addresses"]],
                 "wallet_height": h["height"]}
 
@@ -461,7 +430,10 @@ class Qoin:
 
     def preview_transfer(self, address, amount, priority):
         self.need_wallet()
-        address = (address or "").strip()
+        try:
+            address = qoin_number.as_address(address)   # a number address becomes the usual form
+        except qoin_number.NumberError as e:
+            raise ApiError(str(e))
         v = self.wallet_rpc.call("validate_address", {"address": address})
         if not v.get("valid"):
             raise ApiError("That isn't a valid Qoin address")
@@ -472,7 +444,7 @@ class Qoin:
         pid = secrets.token_hex(8)
         self.pending_tx = {pid: r["tx_metadata"]}
         return {"id": pid, "amount": fmt_qoin(r["amount"]), "fee": fmt_qoin(r["fee"]),
-                "total": fmt_qoin(r["amount"] + r["fee"]), "address": address}
+                "total": fmt_qoin(r["amount"] + r["fee"]), "address": address, "number": number_address(address)}
 
     def confirm_transfer(self, pid):
         self.need_wallet()

@@ -59,6 +59,19 @@ Coinbase rewards are locked for a number of blocks before they can be spent.
 
 `graysons/qoinage --wallet vault` runs the listen-and-earn vault, which pays 13.37 QOIN from a wallet you funded for each five-minute listen. The **Qoinage** tab in Graysons Wallet opens it with your address filled in, and holds the optional HUMM 741 Hz lock for sends. See [QOINAGE.md](QOINAGE.md).
 
+### Number addresses
+
+Every Qoin address can also be written in digits only. Graysons Wallet shows your number address under **Overview** and **Receive** (click it to copy), and takes one anywhere it takes an address. So do Qoinage and the ETC bridge.
+
+    9999 | 155 digits: spend key + view key | 10 digits: checksum      (169 digits)
+
+- It starts with the address prefix: `9999` for a primary address, `29997` for a subaddress, `19998` for an integrated address.
+- It holds exactly what the usual address holds, so it converts both ways with no lookup and nobody to trust. The last 10 digits are the usual address's checksum, so a mistyped digit is caught before anything is sent.
+- It's long because an address carries two 256-bit keys. Digits are easy to read out and to type on a phone keypad, with no upper and lower case to mix up. Spaces and dashes between digits are fine.
+- `qoind` and `graysons-wallet-cli` still take the usual form. Convert either way with `python3 graysons/qoin_number.py <address or number>`.
+
+Tests: `cd graysons && python3 -m unittest test_qoin_number -v` (standard library only).
+
 ## Not yet built: the Bitcoin Cash timing oracle
 
 The BCH-driven 159s / 161s / 1s cycle is a separate protocol layer. The phases add up to 321s against the 300s block time; decide whether the block time or the phases change, and it can be specced from there.

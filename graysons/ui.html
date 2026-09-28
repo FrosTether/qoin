@@ -70,6 +70,9 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .msg { margin-top: 12px; font-size: 14px; }
 .msg.err { color: var(--bad); } .msg.ok { color: var(--good); }
 .copy { cursor: pointer; }
+.mono.num { word-break: normal; overflow-wrap: anywhere; }   /* number address: wrap between blocks of five */
+.numlabel { font-size: 13px; color: var(--muted); margin: 12px 0 2px; }
+td .num { margin-top: 4px; }
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -197,6 +200,8 @@ nav a.gold.on { background: var(--gold); color: var(--gold-text); }
       <div class="card">
         <h3>Your primary address</h3>
         <div class="mono copy" id="addr" title="Click to copy"></div>
+        <div class="numbox"><div class="numlabel">Number address</div>
+          <div class="mono num copy" id="addr-num" title="Click to copy"></div></div>
         <div class="muted" style="font-size:13px;margin-top:8px">Wallet synced to block <span id="wh">–</span></div>
       </div>
       <div class="card">
@@ -208,7 +213,7 @@ nav a.gold.on { background: var(--gold); color: var(--gold-text); }
     <section data-page="send" class="hidden">
       <form class="card" id="f-send">
         <label for="s-addr">Recipient address</label>
-        <input id="s-addr" type="text" class="mono" autocomplete="off" spellcheck="false">
+        <input id="s-addr" type="text" class="mono" autocomplete="off" spellcheck="false" placeholder="Qoin address, or number address (9999…)">
         <label for="s-amt">Amount (QOIN)</label>
         <input id="s-amt" type="text" inputmode="decimal" autocomplete="off">
         <label for="s-pri">Fee priority</label>
@@ -219,7 +224,7 @@ nav a.gold.on { background: var(--gold); color: var(--gold-text); }
       <div class="card hidden" id="send-review">
         <h3>Confirm transfer</h3>
         <table><tbody>
-          <tr><th>To</th><td class="mono" id="sr-addr"></td></tr>
+          <tr><th>To</th><td><div class="mono" id="sr-addr"></div><div class="mono num muted" id="sr-num"></div></td></tr>
           <tr><th>Amount</th><td id="sr-amt"></td></tr>
           <tr><th>Network fee</th><td id="sr-fee"></td></tr>
           <tr><th>Total</th><td><b id="sr-total"></b></td></tr>
@@ -237,7 +242,9 @@ nav a.gold.on { background: var(--gold); color: var(--gold-text); }
       <div class="card">
         <h3>Primary address</h3>
         <div class="mono copy" id="r-primary" title="Click to copy"></div>
-        <p class="muted" style="font-size:13px">Mining rewards from Frostoise always go here.</p>
+        <div class="numbox"><div class="numlabel">Number address</div>
+          <div class="mono num copy" id="r-primary-num" title="Click to copy"></div></div>
+        <p class="muted" style="font-size:13px">Mining rewards from Frostoise always go here. The number address is this same address in digits only, easy to read out or type on a keypad. People can pay either one.</p>
       </div>
       <div class="card">
         <h3>Subaddresses</h3>
@@ -354,8 +361,9 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<"
 function short(s, n = 10) { return s.length > 2 * n + 1 ? s.slice(0, n) + "…" + s.slice(-n) : s; }
 function when(ts) { return ts ? new Date(ts * 1000).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "pending"; }
 async function busy(btn, fn) { btn.disabled = true; try { return await fn(); } finally { btn.disabled = false; } }
-function copyable(el) { el.onclick = () => { navigator.clipboard.writeText(el.textContent); const t = el.title; el.title = "Copied"; setTimeout(() => el.title = t, 1200); }; }
-copyable($("addr")); copyable($("r-primary"));
+// A number address is shown in blocks of five and copied as plain digits.
+function copyable(el) { el.onclick = () => { navigator.clipboard.writeText(el.classList.contains("num") ? el.textContent.replace(/\s+/g, "") : el.textContent); const t = el.title; el.title = "Copied"; setTimeout(() => el.title = t, 1200); }; }
+copyable($("addr")); copyable($("r-primary")); copyable($("addr-num")); copyable($("r-primary-num"));
 
 /* ---------- gate ---------- */
 document.querySelectorAll("[data-gate]").forEach(b => b.onclick = () => {
@@ -462,10 +470,14 @@ async function refresh() {
   $("bal").textContent = summary.balance; $("unl").textContent = summary.unlocked; $("s-unl").textContent = summary.unlocked;
   $("unlock-note").textContent = summary.blocks_to_unlock ? `More unlocks in ${summary.blocks_to_unlock} blocks` : "";
   $("addr").textContent = summary.address; $("r-primary").textContent = summary.address; $("m-addr").textContent = summary.address;
+  $("addr-num").textContent = $("r-primary-num").textContent = summary.number;
+  document.querySelectorAll(".numbox").forEach(b => b.classList.toggle("hidden", !summary.number));
   $("q-to").textContent = short(summary.address, 8);
   $("wh").textContent = summary.wallet_height;
   $("subs").innerHTML = summary.addresses.filter(a => a.index > 0).map(a =>
-    `<tr><td>${a.index}</td><td>${esc(a.label || "")}</td><td class="mono copy" title="Click to copy">${esc(a.address)}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet</td></tr>`;
+    `<tr><td>${a.index}</td><td>${esc(a.label || "")}</td><td><div class="mono copy" title="Click to copy">${esc(a.address)}</div>`
+    + (a.number ? `<div class="mono num muted copy" title="Click to copy the number address">${esc(a.number)}</div>` : "")
+    + `</td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet</td></tr>`;
   $("subs").querySelectorAll(".copy").forEach(copyable);
   loadHistory(true);
 }
@@ -489,7 +501,7 @@ $("f-send").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () =
   try {
     const r = await api("/api/wallet/preview", { address: $("s-addr").value, amount: $("s-amt").value, priority: $("s-pri").value });
     pendingId = r.id; say($("send-msg"), "");
-    $("sr-addr").textContent = r.address; $("sr-amt").textContent = r.amount + " QOIN"; $("sr-fee").textContent = r.fee + " QOIN"; $("sr-total").textContent = r.total + " QOIN";
+    $("sr-addr").textContent = r.address; $("sr-num").textContent = r.number || ""; $("sr-amt").textContent = r.amount + " QOIN"; $("sr-fee").textContent = r.fee + " QOIN"; $("sr-total").textContent = r.total + " QOIN";
     const locked = hummLockOn();
     $("sr-humm").classList.toggle("hidden", !locked); $("sr-tuner").classList.toggle("hidden", !locked);
     $("sr-go").disabled = locked; showPitch($("sr-tuner"), null, true);
