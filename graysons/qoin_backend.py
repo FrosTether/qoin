@@ -30,6 +30,8 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
+import humm
+
 HERE = Path(__file__).resolve().parent
 QOIN_DIR = Path(os.environ.get("QOIN_DATA_DIR", Path.home() / ".qoin"))
 WALLET_DIR = QOIN_DIR / "wallets"
@@ -46,7 +48,10 @@ DEFAULT_SETTINGS = {
     "offline": False,       # run the node with no p2p at all (solo premine)
     "mining_threads": 1,
     "bin_dir": "",
+    "humm_lock": False,     # Qoinage: every send waits for a hum on F# (741 Hz or an octave of it)
+    "qoinage_url": "http://127.0.0.1:45690",   # the Qoinage vault "Open Qoinage" goes to
 }
+HUMM_VALID_S = 120          # a good hum covers one send (or turning the lock off) within 2 minutes
 
 
 # ---------------------------------------------------------------------------
@@ -271,6 +276,7 @@ class Qoin:
         self.wallet_name = None
         self.pending_tx = {}
         self.last_error = ""
+        self.humm_until = 0.0
 
     # ---- node -------------------------------------------------------------
     def daemon_argv(self, with_key_conf):
@@ -470,9 +476,11 @@ class Qoin:
 
     def confirm_transfer(self, pid):
         self.need_wallet()
-        meta = self.pending_tx.pop(pid, None)
-        if not meta:
+        if pid not in self.pending_tx:
             raise ApiError("That transfer expired - review it again")
+        if self.settings.get("humm_lock") and not self.take_humm():
+            raise ApiError("The HUMM lock is on. HUMM 741 Hz, then send.")
+        meta = self.pending_tx.pop(pid)
         r = self.wallet_rpc.call("relay_tx", {"hex": meta}, timeout=120)
         self.wallet_rpc.call("store")
         return {"txid": r.get("tx_hash", "")}
@@ -480,6 +488,31 @@ class Qoin:
     def reveal_seed(self):
         self.need_wallet()
         return {"seed": self.wallet_rpc.call("query_key", {"key_type": "mnemonic"})["key"]}
+
+    # ---- Qoinage: the HUMM 741 Hz lock ------------------------------------------
+    # A ritual on top of the wallet password, not instead of it: anyone can play 741 Hz.
+    def check_humm(self, pcm, rate):
+        try:
+            r = humm.check_base64(pcm, rate)
+        except humm.HummError as e:
+            raise ApiError(str(e))
+        if r["passed"]:
+            self.humm_until = time.monotonic() + HUMM_VALID_S
+        return r
+
+    def take_humm(self):
+        """Spend the last good hum. Each one covers a single send or lock change."""
+        ok = time.monotonic() < self.humm_until
+        self.humm_until = 0.0
+        return ok
+
+    def set_humm_lock(self, on):
+        on = bool(on)
+        if not on and self.settings.get("humm_lock") and not self.take_humm():
+            raise ApiError("HUMM 741 Hz first, then turn the lock off")
+        self.settings["humm_lock"] = on
+        save_settings(self.settings)
+        return {"humm_lock": on}
 
     # ---- Frostoise ----------------------------------------------------------
     def mining_status(self):
@@ -540,6 +573,11 @@ class Qoin:
             s["offline"] = bool(new["offline"])
         if "bin_dir" in new:
             s["bin_dir"] = str(new["bin_dir"]).strip()
+        if "qoinage_url" in new:
+            url = str(new["qoinage_url"]).strip().rstrip("/")
+            if url and not re.fullmatch(r"https?://[^\s/?#]+(/[^\s?#]*)?", url):
+                raise ApiError("The Qoinage server should look like http://127.0.0.1:45690")
+            s["qoinage_url"] = url or DEFAULT_SETTINGS["qoinage_url"]
         self.settings = s
         save_settings(s)
         return {"settings": s, "note": "Restart the node for peer/offline changes to apply."}
@@ -597,6 +635,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(403, {"error": "forbidden"})
         try:
             n = int(self.headers.get("Content-Length", 0))
+            if n > 2_000_000:
+                return self._send(413, {"error": "request too large"})
             args = json.loads(self.rfile.read(n) or b"{}")
             routes = {
                 "/api/state": lambda: APP.state(),
@@ -617,6 +657,8 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/wallet/seed": lambda: APP.reveal_seed(),
                 "/api/mine/start": lambda: APP.start_mining(args.get("threads", 1)),
                 "/api/mine/stop": lambda: APP.stop_mining(),
+                "/api/qoinage/humm": lambda: APP.check_humm(args.get("pcm", ""), args.get("rate", 8000)),
+                "/api/qoinage/lock": lambda: APP.set_humm_lock(args.get("on")),
             }
             fn = routes.get(self.path)
             if not fn:

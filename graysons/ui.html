@@ -10,6 +10,7 @@
   --bg: #eef0f2; --panel: #ffffff; --panel-2: #f6f7f8; --line: #d9dde1;
   --text: #1d2226; --muted: #626b73; --accent: #4a5561; --accent-text: #fff;
   --frost: #1d7fa6; --frost-soft: #e2f2f8; --good: #217a4b; --bad: #b3261e; --warn: #8a5a00;
+  --gold: #946200; --gold-soft: #fbf0d9; --gold-text: #fff;
   --mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
 }
 @media (prefers-color-scheme: dark) {
@@ -17,6 +18,7 @@
     --bg: #15181b; --panel: #1e2226; --panel-2: #262b30; --line: #343a40;
     --text: #e6e8ea; --muted: #9aa3ab; --accent: #aeb7c0; --accent-text: #15181b;
     --frost: #6cc7ea; --frost-soft: #16323d; --good: #5fcf8f; --bad: #ff8a80; --warn: #e6b450;
+    --gold: #f2c14e; --gold-soft: #3a2e12; --gold-text: #15181b;
   }
 }
 * { box-sizing: border-box; }
@@ -90,6 +92,22 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: now
 .hash { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; }
 input[type=range] { width: 100%; accent-color: var(--frost); }
 
+/* qoinage */
+nav a.gold.on { background: var(--gold); color: var(--gold-text); }
+.btn.gold { background: var(--gold); color: var(--gold-text); border-color: var(--gold); }
+.dot.gold { background: var(--gold); }
+.tag.gold { background: var(--gold-soft); color: var(--gold); border-color: transparent; }
+.qoin-hero { background: linear-gradient(135deg, var(--gold-soft), var(--panel)); border-color: var(--gold); }
+.qoin-hero h2 { color: var(--gold); }
+.tuner { display: flex; align-items: center; gap: 16px; margin-top: 14px; padding: 12px 14px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; }
+.tuner .note { font-size: 34px; font-weight: 700; min-width: 3.4ch; font-variant-numeric: tabular-nums; }
+.tuner .info { flex: 1; min-width: 0; }
+.tuner .hz { font-size: 13px; color: var(--muted); }
+.meter { position: relative; height: 8px; margin-top: 10px; border-radius: 999px; background: var(--line); }
+.meter .zone { position: absolute; top: -3px; bottom: -3px; left: 41.67%; width: 16.67%; border-radius: 999px; background: var(--gold-soft); border: 1px solid var(--gold); }
+.meter .needle { position: absolute; top: -6px; left: 50%; width: 4px; height: 20px; margin-left: -2px; border-radius: 2px; background: var(--text); opacity: .3; transition: left .1s linear; }
+.meter-scale { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-top: 6px; }
+
 .seedbox { background: var(--panel-2); border: 1px dashed var(--warn); border-radius: 8px; padding: 14px; font-family: var(--mono); line-height: 1.8; word-spacing: 4px; }
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: grid; place-items: center; padding: 16px; z-index: 10; }
 .modal .card { width: min(560px, 100%); max-height: 90vh; overflow: auto; }
@@ -155,6 +173,7 @@ input[type=range] { width: 100%; accent-color: var(--frost); }
     <a href="#receive">Receive</a>
     <a href="#history">History</a>
     <a href="#frostoise" class="frost">Frostoise miner</a>
+    <a href="#qoinage" class="gold">Qoinage</a>
     <a href="#node">Node</a>
     <span class="spacer"></span>
     <a href="#" id="lock">Close wallet</a>
@@ -163,6 +182,7 @@ input[type=range] { width: 100%; accent-color: var(--frost); }
     <div class="topbar">
       <h2 id="page-title">Overview</h2>
       <div class="row" style="margin:0">
+        <span class="pill hidden" id="humm-pill"><span class="dot gold"></span><span>HUMM lock</span></span>
         <span class="pill hidden" id="mine-pill"><span class="dot good"></span><span>Mining</span></span>
         <span class="pill"><span class="dot" id="node-dot"></span><span id="node-text">Node…</span></span>
       </div>
@@ -204,7 +224,12 @@ input[type=range] { width: 100%; accent-color: var(--frost); }
           <tr><th>Network fee</th><td id="sr-fee"></td></tr>
           <tr><th>Total</th><td><b id="sr-total"></b></td></tr>
         </tbody></table>
-        <div class="row"><button class="btn primary" id="sr-go">Send now</button><button class="btn" id="sr-cancel">Cancel</button></div>
+        <div class="tuner hidden" id="sr-tuner">
+          <div class="note">–</div>
+          <div class="info"><div class="hz">Hum an F#: 92.6, 185, 370 or 741 Hz</div><div class="meter"><span class="zone"></span><span class="needle"></span></div></div>
+        </div>
+        <div class="row"><button class="btn gold hidden" id="sr-humm">HUMM 741 Hz</button><button class="btn primary" id="sr-go">Send now</button><button class="btn" id="sr-cancel">Cancel</button></div>
+        <div id="sr-humm-msg" class="msg"></div>
       </div>
     </section>
 
@@ -254,6 +279,34 @@ input[type=range] { width: 100%; accent-color: var(--frost); }
         <h3>Paying to</h3>
         <div class="mono" id="m-addr"></div>
         <p class="muted" style="font-size:13px">Mined coins are locked for a number of blocks before they become spendable. Starting the miner restarts your node once so it can load this wallet's signing key; the key is never written to the command line and its temporary file is deleted as soon as the node is up.</p>
+      </div>
+    </section>
+
+    <section data-page="qoinage" class="hidden">
+      <div class="card qoin-hero">
+        <h2>Open Qoinage</h2>
+        <p class="muted" style="margin-top:-4px">Listen to five minutes of 741 Hz and the Qoinage vault sends 13.37 QOIN to this wallet. One payout per address per day.</p>
+        <label for="q-url">Qoinage server</label>
+        <input id="q-url" type="text" class="mono" spellcheck="false" autocomplete="off">
+        <div class="row">
+          <button class="btn gold" id="q-open">Open Qoinage</button>
+          <span class="muted" style="font-size:13px">Pays to <span class="mono" id="q-to"></span></span>
+        </div>
+        <div id="q-msg" class="msg"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h3 style="margin:0">HUMM lock</h3><span class="tag" id="h-state">Off</span></div>
+        <p class="muted" style="font-size:14px">When the lock is on, every send waits for you to hum an F#: 741 Hz, or any octave of it (92.6, 185, 370 or 1482 Hz), within a quarter tone. The hum is a ritual, not a password. Anyone can play 741 Hz, so your wallet password still protects your coins.</p>
+        <div class="tuner" id="h-tuner">
+          <div class="note">–</div>
+          <div class="info"><div class="hz">Press HUMM, then hum for three seconds</div><div class="meter"><span class="zone"></span><span class="needle"></span></div>
+            <div class="meter-scale"><span>flat</span><span>F#</span><span>sharp</span></div></div>
+        </div>
+        <div class="row">
+          <button class="btn gold" id="h-test">HUMM 741 Hz</button>
+          <button class="btn" id="h-toggle">Turn lock on</button>
+        </div>
+        <div id="h-msg" class="msg"></div>
       </div>
     </section>
 
@@ -340,14 +393,14 @@ function showSeed(seed, fresh) {
 }
 
 /* ---------- navigation ---------- */
-const titles = { overview: "Overview", send: "Send", receive: "Receive", history: "History", frostoise: "Frostoise miner", node: "Node" };
+const titles = { overview: "Overview", send: "Send", receive: "Receive", history: "History", frostoise: "Frostoise miner", qoinage: "Qoinage", node: "Node" };
 function route() {
   const page = (location.hash || "#overview").slice(1);
   const p = titles[page] ? page : "overview";
   document.querySelectorAll("[data-page]").forEach(s => s.classList.toggle("hidden", s.dataset.page !== p));
   document.querySelectorAll("nav a[href^='#']").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + p));
   $("page-title").textContent = titles[p];
-  document.title = p === "frostoise" ? "Frostoise · Qoin miner" : "Graysons Wallet";
+  document.title = p === "frostoise" ? "Frostoise · Qoin miner" : p === "qoinage" ? "Qoinage · Graysons" : "Graysons Wallet";
   if (p === "history") loadHistory();
 }
 window.addEventListener("hashchange", route);
@@ -394,6 +447,7 @@ async function refresh() {
     $("f-settings").dataset.loaded = 1;
   }
   renderMining(state.mining);
+  renderQoinage();
   if (!state.wallet_open) {
     $("app").classList.add("hidden"); $("gate").classList.remove("hidden");
     const sel = $("o-name"), cur = sel.value;
@@ -408,6 +462,7 @@ async function refresh() {
   $("bal").textContent = summary.balance; $("unl").textContent = summary.unlocked; $("s-unl").textContent = summary.unlocked;
   $("unlock-note").textContent = summary.blocks_to_unlock ? `More unlocks in ${summary.blocks_to_unlock} blocks` : "";
   $("addr").textContent = summary.address; $("r-primary").textContent = summary.address; $("m-addr").textContent = summary.address;
+  $("q-to").textContent = short(summary.address, 8);
   $("wh").textContent = summary.wallet_height;
   $("subs").innerHTML = summary.addresses.filter(a => a.index > 0).map(a =>
     `<tr><td>${a.index}</td><td>${esc(a.label || "")}</td><td class="mono copy" title="Click to copy">${esc(a.address)}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet</td></tr>`;
@@ -435,9 +490,16 @@ $("f-send").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () =
     const r = await api("/api/wallet/preview", { address: $("s-addr").value, amount: $("s-amt").value, priority: $("s-pri").value });
     pendingId = r.id; say($("send-msg"), "");
     $("sr-addr").textContent = r.address; $("sr-amt").textContent = r.amount + " QOIN"; $("sr-fee").textContent = r.fee + " QOIN"; $("sr-total").textContent = r.total + " QOIN";
+    const locked = hummLockOn();
+    $("sr-humm").classList.toggle("hidden", !locked); $("sr-tuner").classList.toggle("hidden", !locked);
+    $("sr-go").disabled = locked; showPitch($("sr-tuner"), null, true);
+    say($("sr-humm-msg"), locked ? "The HUMM lock is on. Hum an F# to unlock this send." : "");
     $("send-review").classList.remove("hidden");
   } catch (err) { say($("send-msg"), err.message, "err"); }
 }); };
+$("sr-humm").onclick = (e) => busy(e.target, async () => {
+  if (await hummCheck($("sr-humm-msg"), $("sr-tuner"))) $("sr-go").disabled = false;
+});
 $("sr-cancel").onclick = () => { pendingId = null; $("send-review").classList.add("hidden"); };
 $("sr-go").onclick = (e) => busy(e.target, async () => {
   try { const r = await api("/api/wallet/confirm", { id: pendingId });
@@ -459,6 +521,130 @@ $("m-start").onclick = (e) => busy(e.target, async () => {
 });
 $("m-stop").onclick = (e) => busy(e.target, async () => {
   try { renderMining(await api("/api/mine/stop")); say($("m-msg"), "Stopped."); } catch (err) { say($("m-msg"), err.message, "err"); }
+});
+
+/* ---------- qoinage ---------- */
+const HUMM_SECONDS = 3;
+const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+function hummLockOn() { return !!(state && state.settings && state.settings.humm_lock); }
+
+function renderQoinage() {
+  const locked = hummLockOn();
+  $("h-state").textContent = locked ? "On" : "Off"; $("h-state").className = "tag" + (locked ? " gold" : "");
+  $("h-toggle").textContent = locked ? "Turn lock off" : "Turn lock on";
+  $("humm-pill").classList.toggle("hidden", !locked);
+  if (!$("q-url").dataset.loaded) { $("q-url").value = state.settings.qoinage_url || ""; $("q-url").dataset.loaded = 1; }
+}
+
+// Live pitch for the tuner: normalized autocorrelation, 80-1600 Hz. The real check runs in humm.py.
+function pitchOf(buf, rate) {
+  let e = 0; for (let i = 0; i < buf.length; i++) e += buf[i] * buf[i];
+  if (Math.sqrt(e / buf.length) < 0.006) return null;
+  const lo = Math.floor(rate / 1600), hi = Math.ceil(rate / 80), n = buf.length - hi - 1;
+  if (n < 64) return null;
+  let e1 = 0; for (let i = 0; i < n; i++) e1 += buf[i] * buf[i];
+  const corr = new Float32Array(hi + 2);
+  for (let lag = lo - 1; lag <= hi + 1; lag++) {
+    let s = 0, e2 = 0;
+    for (let i = 0; i < n; i++) { const b = buf[i + lag]; s += buf[i] * b; e2 += b * b; }
+    corr[lag] = e1 && e2 ? s / Math.sqrt(e1 * e2) : 0;
+  }
+  let peak = 0; for (let lag = lo; lag <= hi; lag++) peak = Math.max(peak, corr[lag]);
+  if (peak < 0.6) return null;
+  for (let lag = lo; lag <= hi; lag++) {
+    if (corr[lag] >= 0.9 * peak && corr[lag] >= corr[lag - 1] && corr[lag] >= corr[lag + 1]) {
+      const p = corr[lag - 1], q = corr[lag], r = corr[lag + 1], d = p - 2 * q + r;
+      return rate / (lag + (d ? 0.5 * (p - r) / d : 0));
+    }
+  }
+  return null;
+}
+
+function showPitch(root, hz, reset) {
+  const note = root.querySelector(".note"), info = root.querySelector(".hz"), needle = root.querySelector(".needle");
+  if (!info.dataset.idle) info.dataset.idle = info.textContent;
+  if (!hz) {
+    note.textContent = "–"; note.style.color = ""; needle.style.left = "50%"; needle.style.opacity = .3;
+    info.textContent = reset ? info.dataset.idle : "Listening…";
+    return;
+  }
+  const midi = 69 + 12 * Math.log2(hz / 440), n = Math.round(midi);
+  let semis = (12 * Math.log2(hz / 741)) % 12; if (semis < 0) semis += 12; if (semis > 6) semis -= 12;
+  const cents = Math.round(semis * 100), on = Math.abs(cents) <= 50;
+  note.textContent = NOTE_NAMES[((n % 12) + 12) % 12] + (Math.floor(n / 12) - 1);
+  note.style.color = on ? "var(--good)" : "";
+  info.textContent = `${hz.toFixed(1)} Hz · ` + (Math.abs(cents) < 5 ? "right on F#" : `${Math.abs(cents)}¢ ${cents < 0 ? "below" : "above"} F#`);
+  needle.style.opacity = 1; needle.style.left = (50 + Math.max(-300, Math.min(300, cents)) / 6) + "%";
+}
+
+async function recordHumm(onPitch) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("This browser can't use a microphone here.");
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    if (ctx.state === "suspended") await ctx.resume();
+    const rate = ctx.sampleRate, need = Math.ceil(HUMM_SECONDS * rate), got = new Float32Array(need);
+    const src = ctx.createMediaStreamSource(stream), an = ctx.createAnalyser(), proc = ctx.createScriptProcessor(4096, 1, 1), mute = ctx.createGain();
+    an.fftSize = 2048; mute.gain.value = 0;
+    src.connect(an); src.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+    const view = new Float32Array(an.fftSize);
+    const tick = setInterval(() => { an.getFloatTimeDomainData(view); onPitch(pitchOf(view, rate)); }, 100);
+    let have = 0;
+    try {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("The microphone didn't send any sound.")), (HUMM_SECONDS + 5) * 1000);
+        proc.onaudioprocess = (ev) => {
+          const d = ev.inputBuffer.getChannelData(0), take = Math.min(d.length, need - have);
+          if (take > 0) { got.set(d.subarray(0, take), have); have += take; }
+          if (have >= need) { clearTimeout(timer); resolve(); }
+        };
+      });
+    } finally { clearInterval(tick); proc.onaudioprocess = null; src.disconnect(); proc.disconnect(); }
+    return { samples: got, rate };
+  } finally { stream.getTracks().forEach(t => t.stop()); ctx.close(); }
+}
+
+// 8 kHz mono int16, base64 - what humm.py analyses.
+function toPcm8k(samples, rate) {
+  const ratio = rate / 8000, n = Math.floor(samples.length / ratio), out = new Int16Array(n);
+  for (let j = 0; j < n; j++) {
+    const a = Math.floor(j * ratio), b = Math.max(a + 1, Math.floor((j + 1) * ratio));
+    let s = 0; for (let i = a; i < b; i++) s += samples[i];
+    out[j] = Math.max(-32768, Math.min(32767, Math.round(s / (b - a) * 32767)));
+  }
+  const bytes = new Uint8Array(out.buffer); let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+async function hummCheck(msgEl, tuner) {
+  say(msgEl, "Listening for three seconds. Hum one long, steady F#.");
+  let rec;
+  try { rec = await recordHumm((hz) => showPitch(tuner, hz)); }
+  catch (err) { say(msgEl, err.name === "NotAllowedError" ? "Microphone access is blocked. Allow it for this page, then try again." : err.message, "err"); return false; }
+  say(msgEl, "Checking…");
+  try {
+    const r = await api("/api/qoinage/humm", { pcm: toPcm8k(rec.samples, rec.rate), rate: 8000 });
+    say(msgEl, r.message + (r.passed ? " Good for one send in the next two minutes." : ""), r.passed ? "ok" : "err");
+    return r.passed;
+  } catch (err) { say(msgEl, err.message, "err"); return false; }
+}
+
+$("q-open").onclick = () => {
+  const url = $("q-url").value.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\/[^\s\/?#]+(\/[^\s?#]*)?$/.test(url)) return say($("q-msg"), "The Qoinage server should look like http://127.0.0.1:45690", "err");
+  if (!summary) return say($("q-msg"), "Open a wallet first.", "err");
+  window.open(url + "/?to=" + encodeURIComponent(summary.address), "_blank", "noopener");
+  say($("q-msg"), "Qoinage opened in a new tab. Listen there for five minutes.", "ok");
+  if (url !== state.settings.qoinage_url) api("/api/settings", { qoinage_url: url }).then(refresh).catch((err) => say($("q-msg"), err.message, "err"));
+};
+$("h-test").onclick = (e) => busy(e.target, () => hummCheck($("h-msg"), $("h-tuner")));
+$("h-toggle").onclick = (e) => busy(e.target, async () => {
+  const on = !hummLockOn();
+  if (!on && !(await hummCheck($("h-msg"), $("h-tuner")))) return;
+  try { await api("/api/qoinage/lock", { on }); say($("h-msg"), on ? "HUMM lock on. Every send now waits for your F#." : "HUMM lock off.", "ok"); }
+  catch (err) { say($("h-msg"), err.message, "err"); }
+  await refresh();
 });
 
 /* ---------- node ---------- */

@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qoinage</title>
+<link rel="icon" href="/icon.svg">
+<style>
+:root {
+  --bg: #eef0f2; --panel: #ffffff; --panel-2: #f6f7f8; --line: #d9dde1;
+  --text: #1d2226; --muted: #626b73; --good: #217a4b; --bad: #b3261e;
+  --gold: #946200; --gold-soft: #fbf0d9; --gold-text: #fff;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", "DejaVu Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181b; --panel: #1e2226; --panel-2: #262b30; --line: #343a40;
+    --text: #e6e8ea; --muted: #9aa3ab; --good: #5fcf8f; --bad: #ff8a80;
+    --gold: #f2c14e; --gold-soft: #3a2e12; --gold-text: #15181b;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, textarea { font: inherit; color: inherit; }
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+.wrap { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+.brand { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; }
+.brand img { width: 34px; height: 34px; }
+.brand b { display: block; font-size: 17px; }
+.brand span { font-size: 12px; color: var(--muted); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+.hero { background: linear-gradient(135deg, var(--gold-soft), var(--panel)); border-color: var(--gold); }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 8px; }
+h1 .gold { color: var(--gold); }
+h2 { font-size: 21px; margin: 0 0 8px; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 6px; }
+label:first-child { margin-top: 0; }
+textarea { width: 100%; padding: 10px 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; resize: none; }
+textarea:focus, button:focus-visible, input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+input[type=range] { width: 100%; accent-color: var(--gold); }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 16px; }
+.row.center { justify-content: center; }
+.btn { padding: 11px 20px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); cursor: pointer; }
+.btn.gold { background: var(--gold); color: var(--gold-text); border-color: var(--gold); font-weight: 600; }
+.btn.wide { width: 100%; }
+.btn:disabled { opacity: .55; cursor: default; }
+.msg { margin-top: 12px; font-size: 14px; min-height: 1px; }
+.msg.err { color: var(--bad); } .msg.ok { color: var(--good); }
+.fine { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+
+.ring { position: relative; width: 220px; height: 220px; margin: 6px auto 4px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .track { fill: none; stroke: var(--line); stroke-width: 10; }
+.ring .arc { fill: none; stroke: var(--gold); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .25s linear; }
+.ring .clock { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .clock b { font-size: 44px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.ring .clock span { font-size: 14px; color: var(--muted); }
+.breathe { animation: breathe 4s ease-in-out infinite; }
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+@media (prefers-reduced-motion: reduce) { .breathe { animation: none; } .ring .arc { transition: none; } }
+.vault { font-size: 13px; color: var(--muted); text-align: center; margin: 4px 0 0; }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="brand"><img src="/icon.svg" alt=""><div><b>Qoinage</b><span>Qoin · listen and earn</span></div></header>
+
+  <section class="card hero">
+    <h1>Listen for <span id="mins">5 minutes</span>.<br>Earn <span class="gold"><span id="reward">13.37</span> QOIN</span>.</h1>
+    <p class="muted" style="margin:0" id="sound">A 741 Hz sine wave</p>
+  </section>
+
+  <section class="card" id="step-start">
+    <label for="addr">Your Qoin address</label>
+    <textarea id="addr" class="mono" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste your wallet's primary address"></textarea>
+    <div class="row"><button class="btn gold wide" id="go">Listen · 5:00</button></div>
+    <div class="msg" id="start-msg"></div>
+    <p class="fine">Headphones on, volume low. Keep this page open and playing until the end. Your screen stays on while it plays.</p>
+  </section>
+
+  <section class="card hidden" id="step-listen">
+    <div class="ring breathe" id="ring">
+      <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="track" cx="100" cy="100" r="88"></circle><circle class="arc" id="arc" cx="100" cy="100" r="88"></circle></svg>
+      <div class="clock"><b id="left">5:00</b><span id="tone-label">741 Hz</span></div>
+    </div>
+    <div class="row center"><button class="btn gold hidden" id="resume">Resume sound</button><button class="btn" id="stop">Stop</button></div>
+    <div class="msg" id="listen-msg" style="text-align:center"></div>
+  </section>
+
+  <section class="card hidden" id="step-done">
+    <h2 id="done-title">Earned 13.37 QOIN</h2>
+    <p class="muted" id="done-text" style="margin:0">Queued for the next payout.</p>
+    <p class="mono" id="done-tx"></p>
+    <div class="row"><button class="btn" id="again">Done</button></div>
+  </section>
+
+  <section class="card">
+    <label for="vol">Volume</label>
+    <input id="vol" type="range" min="0" max="100" value="30">
+  </section>
+
+  <p class="vault" id="vault">Checking the vault…</p>
+  <p class="fine">Qoinage pays from a funded vault wallet. It doesn't mint coins. It checks that this page stayed open and playing for the whole listen, but it can't tell a person from a script, so each address earns <span id="once">once a day</span>.</p>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const CIRC = 2 * Math.PI * 88;
+let st = null, session = null, ctx = null, nodes = null, timer = null, beatTimer = null, wake = null;
+let t0 = 0, total = 300, claimId = null;
+
+async function api(path, body) {
+  const opts = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(() => ({ error: "The vault sent a bad response" }));
+  if (!r.ok || j.error) { const e = new Error(j.error || r.statusText); e.server = true; throw e; }
+  return j;
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+function say(el, text, kind) { el.textContent = text || ""; el.className = "msg " + (kind || ""); }
+function mmss(s) { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function show(step) { for (const id of ["step-start", "step-listen", "step-done"]) $(id).classList.toggle("hidden", id !== step); }
+
+async function loadStatus() {
+  try { st = await api("/api/status"); } catch (e) { $("vault").textContent = "Can't reach the vault right now."; return; }
+  const m = st.seconds / 60;
+  $("mins").textContent = Number.isInteger(m) ? `${m} minute${m === 1 ? "" : "s"}` : `${st.seconds} seconds`;
+  $("reward").textContent = st.reward;
+  $("sound").textContent = `A ${st.tone} Hz sine wave` + (st.pulse ? ` with a ${st.pulse} Hz pulse` : "") + (st.credit ? ` · ${st.credit}` : "");
+  if (!session) $("go").textContent = "Listen · " + mmss(st.seconds);
+  $("once").textContent = st.per_day === 1 ? "once a day" : `${st.per_day} times a day`;
+  $("vault").textContent = {
+    open: `Vault open · about ${Number(st.listens_left).toLocaleString()} listens left · ${st.today} of ${st.cap} paid today`,
+    empty: "The vault is empty right now.",
+    offline: "The vault is offline right now.",
+    resting: `The vault has paid its ${st.cap} listens for today.`,
+  }[st.vault] || "";
+}
+
+/* ---------- sound ---------- */
+function level() { const v = $("vol").value / 100; return 0.4 * v * v; }
+function startTone(tone, pulse) {
+  const osc = ctx.createOscillator(); osc.type = "sine"; osc.frequency.value = tone;
+  const vol = ctx.createGain(); vol.gain.value = 0;
+  const extra = [];
+  let last = osc;
+  if (pulse > 0) {  // optional slow swell: gain moves between 0.7 and 1.0
+    const amp = ctx.createGain(); amp.gain.value = 0.85;
+    const lfo = ctx.createOscillator(); lfo.frequency.value = pulse;
+    const depth = ctx.createGain(); depth.gain.value = 0.15;
+    lfo.connect(depth); depth.connect(amp.gain); osc.connect(amp); lfo.start(); extra.push(lfo); last = amp;
+  }
+  last.connect(vol); vol.connect(ctx.destination);
+  osc.start();
+  nodes = { osc, vol, extra };
+  vol.gain.setTargetAtTime(level(), ctx.currentTime, 0.8);   // two-second fade in
+}
+function stopTone() {
+  if (!ctx) return;
+  const c = ctx, n = nodes; ctx = nodes = null;
+  try { if (n) n.vol.gain.setTargetAtTime(0, c.currentTime, 0.3); } catch (e) {}
+  setTimeout(() => { try { if (n) { n.osc.stop(); n.extra.forEach((x) => x.stop()); } } catch (e) {} c.close().catch(() => {}); }, 1500);
+}
+$("vol").oninput = () => { if (nodes) nodes.vol.gain.setTargetAtTime(level(), ctx.currentTime, 0.05); };
+$("resume").onclick = () => { if (ctx) ctx.resume(); };
+
+async function keepAwake() { try { wake = await navigator.wakeLock.request("screen"); } catch (e) { wake = null; } }
+function letSleep() { try { if (wake) wake.release(); } catch (e) {} wake = null; }
+document.addEventListener("visibilitychange", () => { if (session && document.visibilityState === "visible") keepAwake(); });
+
+/* ---------- listening ---------- */
+$("go").onclick = async () => {
+  const address = $("addr").value.trim();
+  if (!address) return say($("start-msg"), "Paste your Qoin address first.", "err");
+  $("go").disabled = true; say($("start-msg"), "Opening the vault…");
+  const audio = new (window.AudioContext || window.webkitAudioContext)();  // made inside the tap so phones allow sound
+  audio.resume().catch(() => {});
+  let r;
+  try { r = await api("/api/start", { address }); }
+  catch (err) { audio.close().catch(() => {}); $("go").disabled = false; return say($("start-msg"), err.message, "err"); }
+  try { localStorage.setItem("qoinage-address", address); } catch (e) {}
+  session = r.session; total = r.seconds; t0 = performance.now(); ctx = audio;
+  startTone(r.tone, r.pulse);
+  $("tone-label").textContent = `${r.tone} Hz` + (r.pulse ? ` · ${r.pulse} Hz` : "");
+  say($("start-msg"), ""); say($("listen-msg"), ""); show("step-listen"); $("go").disabled = false;
+  $("arc").style.strokeDasharray = String(CIRC);
+  keepAwake();
+  timer = setInterval(tick, 250); tick();
+  beatTimer = setInterval(beat, r.beat * 1000);
+};
+
+function tick() {
+  const left = total - (performance.now() - t0) / 1000;
+  $("left").textContent = mmss(left);
+  $("arc").style.strokeDashoffset = String(CIRC * Math.max(0, left) / total);
+  const paused = ctx && ctx.state !== "running";
+  $("resume").classList.toggle("hidden", !paused);
+  if (paused) say($("listen-msg"), "Your device paused the sound. Tap Resume sound to keep listening.", "err");
+  else if ($("listen-msg").classList.contains("err")) say($("listen-msg"), "");
+  if (left <= 0) finish();
+}
+
+async function beat() {
+  if (!session) return;
+  try { await api("/api/beat", { session }); }
+  catch (err) { if (err.server) fail(err.message); }  // network blips just miss one check-in
+}
+
+function halt() {
+  clearInterval(timer); clearInterval(beatTimer); timer = beatTimer = null;
+  stopTone(); letSleep();
+}
+
+function fail(message) {
+  halt(); session = null;
+  show("step-start"); say($("start-msg"), message, "err"); loadStatus();
+}
+
+async function finish() {
+  if (!session || !timer) return;
+  halt();
+  $("left").textContent = "0:00"; $("arc").style.strokeDashoffset = "0";
+  say($("listen-msg"), "Claiming your reward…");
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let r;
+    try { r = await api("/api/claim", { session }); }
+    catch (err) { if (!err.server && attempt < 4) { await sleep(3000); continue; } return fail(err.message); }
+    if (r.status === "early") { await sleep((r.wait + 1) * 1000); continue; }
+    session = null; claimId = r.id;
+    $("done-title").textContent = `Earned ${r.reward} QOIN`;
+    $("done-text").textContent = "Queued for the next payout."; $("done-tx").textContent = "";
+    show("step-done"); watchPayout(); loadStatus();
+    return;
+  }
+  fail("Couldn't reach the vault to claim. Your listen may still count - try again in a minute.");
+}
+
+async function watchPayout() {
+  const id = claimId;
+  try {
+    const p = await api("/api/payout?id=" + encodeURIComponent(id));
+    if (id !== claimId) return;
+    if (p.status === "paid") {
+      $("done-text").textContent = "Sent. It shows up in your wallet within a block or two.";
+      $("done-tx").textContent = "Transaction " + p.txid;
+      return;
+    }
+    if (p.status === "unknown") { $("done-text").textContent = "The payout was interrupted. The vault keeper will check it by hand."; return; }
+    $("done-text").textContent = "Queued for the next payout. Payouts go out about once a minute, or once the vault's coins unlock.";
+  } catch (e) {}
+  setTimeout(watchPayout, 10000);
+}
+
+$("stop").onclick = () => { halt(); session = null; show("step-start"); say($("start-msg"), "Stopped. Nothing earned this time."); };
+$("again").onclick = () => { claimId = null; show("step-start"); say($("start-msg"), ""); };
+
+/* ---------- boot ---------- */
+(() => {
+  const q = new URLSearchParams(location.search).get("to");
+  let saved = ""; try { saved = localStorage.getItem("qoinage-address") || ""; } catch (e) {}
+  $("addr").value = (q || saved).trim();
+  loadStatus();
+  setInterval(() => { if (!session) loadStatus(); }, 30000);
+})();
+</script>
+</body>
+</html>

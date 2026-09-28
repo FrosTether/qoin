@@ -1,0 +1,3 @@
+#!/bin/sh
+# Qoinage - the listen-and-earn vault: 13.37 QOIN for five minutes of a 741 Hz sine wave.
+exec python3 "$(dirname "$(readlink -f "$0")")/qoinage.py" "$@"

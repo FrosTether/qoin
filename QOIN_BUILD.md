@@ -8,6 +8,7 @@ Qoin is a fork of Wownero. This repo builds three programs, and `graysons/` hold
 | `graysons-wallet-cli` / `graysons-wallet-rpc` | **Graysons Wallet**, the forked Wownero wallet (command line and RPC engine) |
 | `graysons/graysons-wallet` | Graysons Wallet desktop app (runs in your browser, talks to the RPC engine) |
 | `graysons/frostoise` | **Frostoise**, the wallet miner: solo-mines Qoin into the open Graysons wallet |
+| `graysons/qoinage` | **Qoinage**, the listen-and-earn vault: 13.37 QOIN for five minutes of a 741 Hz sine wave. See [QOINAGE.md](QOINAGE.md) |
 
 ## What changed from Wownero
 
@@ -33,7 +34,7 @@ make -j1 daemon simplewallet wallet_rpc_server
 ## Run Graysons Wallet and Frostoise
 
 ```bash
-~/frostnero/graysons/install-shortcuts.sh   # once: adds both to the app menu and ~/.local/bin
+~/frostnero/graysons/install-shortcuts.sh   # once: adds both to the app menu, and all three commands to ~/.local/bin
 graysons-wallet                              # or: frostoise
 ```
 
@@ -53,6 +54,10 @@ Coinbase rewards are locked for a number of blocks before they can be spent.
 ### Spend key as a sine-tone WAV (optional)
 
 `tools/sinekey.py` still works: `python3 tools/sinekey.py new ~/qoin-key.wav` prints a key, and `build/bin/graysons-wallet-cli --generate-from-spend-key ~/.qoin/wallets/<name>` turns it into a wallet that Graysons and Frostoise can open.
+
+### Qoinage and the HUMM lock
+
+`graysons/qoinage --wallet vault` runs the listen-and-earn vault, which pays 13.37 QOIN from a wallet you funded for each five-minute listen. The **Qoinage** tab in Graysons Wallet opens it with your address filled in, and holds the optional HUMM 741 Hz lock for sends. See [QOINAGE.md](QOINAGE.md).
 
 ## Not yet built: the Bitcoin Cash timing oracle
 
