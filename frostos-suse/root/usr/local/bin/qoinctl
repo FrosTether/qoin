@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# qoinctl — control + status for the FrostOS Qoin core service.
+# Portable: uses systemctl (Linux/systemd) or service (BSD).
+#   frostcoin.io · finux.tech
+#
+set -eu
+
+DATADIR="${QOIN_DATADIR:-/var/lib/qoin}"
+
+case "${1:-status}" in
+	status)
+		exec /usr/local/bin/qoind --datadir "$DATADIR" status
+		;;
+	start|stop|restart)
+		if command -v systemctl >/dev/null 2>&1; then
+			exec systemctl "$1" qoind
+		else
+			exec service qoind "$1"
+		fi
+		;;
+	id)
+		cat "${DATADIR}/state/node.id" 2>/dev/null || { echo "no node id yet — start qoind"; exit 1; }
+		;;
+	-h|--help)
+		echo "usage: qoinctl [status|start|stop|restart|id]"
+		;;
+	*)
+		echo "qoinctl: unknown command: $1" >&2
+		echo "usage: qoinctl [status|start|stop|restart|id]" >&2
+		exit 2
+		;;
+esac

@@ -1,0 +1,23 @@
+[Unit]
+Description=Qoin core service (FrostOS) — frostcoin.io / finux.tech
+Documentation=https://finux.tech
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qoin
+Group=qoin
+ExecStart=/usr/local/bin/qoind --datadir /var/lib/qoin --interval 15
+Restart=on-failure
+RestartSec=5
+# Hardening: the Qoin core needs almost nothing.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+StateDirectory=qoin
+ReadWritePaths=/var/lib/qoin
+
+[Install]
+WantedBy=multi-user.target

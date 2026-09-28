@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FrostOS (SUSE variant): a KIWI image description.
+  Build it on an openSUSE host with kiwi-ng; the exact command is in README.md.
+
+  Base: openSUSE Leap (freely redistributable; built from the same SLE sources
+  as SLED, so it is the enterprise base with no subscription and no ISO to
+  download). KIWI pulls packages from the repo below at build time.
+
+  Package names below are openSUSE names; verify with "zypper se NAME" and pin
+  the repo path to your Leap version. The root password is a PLACEHOLDER; set
+  your own or force a first-boot reset (see config.sh).
+-->
+<image schemaversion="7.5" name="FrostOS">
+
+  <description type="system">
+    <author>Jacob Frost</author>
+    <contact>finux.tech</contact>
+    <specification>
+      FrostOS — openSUSE-based, Qoin core service, security userland.
+      Not affiliated with SUSE, openSUSE, or Kali Linux.
+    </specification>
+  </description>
+
+  <preferences>
+    <version>0.1.0</version>
+    <packagemanager>zypper</packagemanager>
+    <locale>en_US</locale>
+    <keytable>us</keytable>
+    <timezone>UTC</timezone>
+    <rpm-excludedocs>true</rpm-excludedocs>
+    <bootsplash-theme>openSUSE</bootsplash-theme>
+    <!-- Bootable hybrid ISO (USB-writable), UEFI. Switch to type "oem" for a
+         raw disk image, or "docker" for a container. -->
+    <type image="iso" primary="true" flags="overlay" hybrid="true"
+          firmware="uefi" installiso="true"/>
+  </preferences>
+
+  <!-- PLACEHOLDER password hash. Generate your own: `openssl passwd -6`
+       Better: leave a locked root and force console reset via config.sh. -->
+  <users>
+    <user name="root" password="!" home="/root" groups="root"/>
+    <user name="qoin" home="/var/lib/qoin" groups="qoin" shell="/usr/sbin/nologin"/>
+  </users>
+
+  <repository type="rpm-md" alias="Leap-OSS" priority="2">
+    <source path="obs://openSUSE:Leap:15.6/standard"/>
+  </repository>
+
+  <packages type="image">
+    <!-- base system -->
+    <package name="patterns-base-base"/>
+    <package name="patterns-base-minimal_base"/>
+    <package name="kernel-default"/>
+    <package name="grub2"/>
+    <package name="grub2-x86_64-efi"/>
+    <package name="systemd"/>
+    <package name="NetworkManager"/>
+    <package name="openssh"/>
+    <package name="sudo"/>
+    <package name="vim"/>
+    <package name="tmux"/>
+    <package name="git-core"/>
+    <package name="python3"/>
+    <package name="ca-certificates"/>
+
+    <!-- Kali-flavor security toolset (openSUSE names; verify with zypper se) -->
+    <package name="nmap"/>
+    <package name="wireshark"/>
+    <package name="tcpdump"/>
+    <package name="john"/>
+    <package name="hashcat"/>
+    <package name="hydra"/>
+    <package name="aircrack-ng"/>
+    <package name="nikto"/>
+    <package name="sqlmap"/>
+    <package name="radare2"/>
+    <package name="yara"/>
+    <package name="binwalk"/>
+    <package name="tor"/>
+    <package name="gnupg"/>
+    <package name="wireguard-tools"/>
+    <package name="masscan"/>
+
+    <!-- light desktop (SLED-like); drop this block for a headless build -->
+    <package name="patterns-xfce-xfce"/>
+    <package name="xorg-x11-server"/>
+    <package name="xf86-video-vesa"/>
+  </packages>
+
+  <packages type="bootstrap">
+    <package name="udev"/>
+    <package name="filesystem"/>
+    <package name="glibc-locale"/>
+    <package name="openSUSE-release"/>
+    <package name="ca-certificates-mozilla"/>
+  </packages>
+
+</image>

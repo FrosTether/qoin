@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# frostfirstboot — run the one-time provisioning wizard at boot.
+# qoin-firstboot is idempotent (it no-ops once the wallet exists), so running
+# it every boot is safe; it only provisions the first time.
+#
+# PROVIDE: frostfirstboot
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="frostfirstboot"
+rcvar="frostfirstboot_enable"
+start_cmd="frostfirstboot_start"
+stop_cmd=":"
+
+frostfirstboot_start()
+{
+	QOIN_DATADIR=/var/db/qoin /usr/local/bin/qoin-firstboot || true
+}
+
+load_rc_config $name
+: ${frostfirstboot_enable:="YES"}
+run_rc_command "$1"

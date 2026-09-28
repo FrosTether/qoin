@@ -6,6 +6,9 @@ qoind_enable="YES"
 qoind_datadir="/var/db/qoin"
 qoind_interval="15"
 
+# --- First-boot provisioning wizard (idempotent; provisions the wallet once) ---
+frostfirstboot_enable="YES"
+
 # --- sane hardening defaults ---
 clear_tmp_enable="YES"          # wipe /tmp on boot
 syslogd_flags="-ss"             # no open syslog sockets

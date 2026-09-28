@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# qoin-firstboot — one-time provisioning wizard for FrostOS.
+#
+# Runs once on first boot. Personalizes each install to its user:
+#   NORMAL  (default): generate a full-entropy random wallet ON THIS DEVICE,
+#                      then print a plain "back this up" card.
+#   EXPERIENCED (+1):  advanced detail, and the option to bring your OWN key by
+#                      placing it on the device (never via chat, never guessable).
+#
+# Safety, non-negotiable:
+#   - Keys are random (OS CSPRNG) or user-supplied files. NEVER derived from a
+#     birthday, name, or any guessable input. NEVER printed, logged, or shipped.
+#   - Experienced import reads a key already on the device; it is validated,
+#     stored 0600, and the private key is never echoed.
+#
+#   frostcoin.io · finux.tech
+#
+set -eu
+
+DATADIR="${QOIN_DATADIR:-/var/lib/qoin}"     # BSD unit passes /var/db/qoin
+KEYDIR="${DATADIR}/keys"
+FLAG="${DATADIR}/state/.firstboot-done"
+QOIND="${QOIND:-/usr/local/bin/qoind}"
+IMPORT="${FROST_IMPORT_KEY:-/etc/frost/import/spend.pem}"
+
+# Experienced mode if any of these hold.
+EXPERIENCED=0
+[ "${FROST_EXPERIENCED:-0}" = "1" ] && EXPERIENCED=1
+[ -f /etc/frost/experienced ] && EXPERIENCED=1
+[ "${1:-}" = "--experienced" ] && EXPERIENCED=1
+
+sha256_hex() {
+	if command -v sha256sum >/dev/null 2>&1; then sha256sum | cut -d' ' -f1
+	elif command -v sha256 >/dev/null 2>&1; then sha256 -q
+	elif command -v shasum >/dev/null 2>&1; then shasum -a 256 | cut -d' ' -f1
+	else od -An -tx1 | tr -d ' \n'; fi
+}
+fpr() { openssl ec -in "$1" -pubout -outform DER 2>/dev/null | sha256_hex | cut -c1-16 | tr '[:lower:]' '[:upper:]'; }
+
+card() {
+	fp=$(cat "${KEYDIR}/device.fpr" 2>/dev/null || echo unknown)
+	node=$(cat "${DATADIR}/state/node.id" 2>/dev/null || echo unknown)
+	echo
+	echo "  ┌──────────────────────────────────────────────┐"
+	echo "  │  FrostOS — this device is now yours            │"
+	echo "  └──────────────────────────────────────────────┘"
+	echo "   node     : ${node}"
+	echo "   wallet   : ${fp}"
+	echo "   BACK UP  : ${KEYDIR}/spend.pem   (the ONLY copy of your key)"
+	echo "   if you lose it, the identity is gone — that's self-custody."
+	if [ "$EXPERIENCED" = 1 ]; then
+		echo
+		echo "   [experienced +1]"
+		echo "   pubkey   : ${KEYDIR}/spend.pub"
+		echo "   datadir  : ${DATADIR}"
+		echo "   show addr: qoind wallet address"
+		echo "   back up  : cp ${KEYDIR}/spend.pem /path/to/offline/backup"
+		echo "   bring own: put an EC key at ${IMPORT} before first boot to import it"
+	fi
+	echo "   frostcoin.io · finux.tech"
+	echo
+}
+
+# Idempotent: never re-provision.
+if [ -f "$FLAG" ] || [ -f "${KEYDIR}/spend.pem" ]; then
+	card
+	exit 0
+fi
+
+mkdir -p "${KEYDIR}" "${DATADIR}/state"
+chmod 0700 "${KEYDIR}" 2>/dev/null || true
+
+if [ "$EXPERIENCED" = 1 ] && [ -f "$IMPORT" ]; then
+	if command -v openssl >/dev/null 2>&1 && openssl ec -in "$IMPORT" -noout 2>/dev/null; then
+		( umask 077; cp "$IMPORT" "${KEYDIR}/spend.pem" )
+		chmod 0600 "${KEYDIR}/spend.pem" 2>/dev/null || true
+		openssl ec -in "${KEYDIR}/spend.pem" -pubout -out "${KEYDIR}/spend.pub" 2>/dev/null || true
+		printf 'FROST-%s\n' "$(fpr "${KEYDIR}/spend.pem")" > "${KEYDIR}/device.fpr"
+		echo ">> imported your key from ${IMPORT}. Remove that copy if you don't want it lingering."
+	else
+		echo ">> ${IMPORT} is not a valid EC key — generating a fresh one on-device instead."
+		"$QOIND" --datadir "$DATADIR" wallet init
+	fi
+else
+	# NORMAL: random key born on this device.
+	"$QOIND" --datadir "$DATADIR" wallet init
+fi
+
+# node id + state
+"$QOIND" --datadir "$DATADIR" init >/dev/null 2>&1 || true
+
+date -u +%FT%TZ > "$FLAG"
+card
