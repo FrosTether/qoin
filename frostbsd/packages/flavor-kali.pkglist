@@ -1,0 +1,78 @@
+# FrostBSD "Kali-flavor" package set — FreeBSD pkg names.
+#
+# These reproduce Kali's security flavor from native FreeBSD ports. Verify each
+# with `pkg search <name>` on your target release; the build installs best-effort
+# and warns (does not abort) on any that have no port.
+#
+# Kali is Debian/Linux; some of its tools have NO clean BSD port. Known gaps are
+# listed at the bottom — use the FreeBSD linux compat layer (linuxulator) or a
+# Linux jail/VM for those, or accept the native equivalent.
+
+# --- recon / scanning ---
+nmap
+masscan
+zmap
+dns2tcp
+whatweb
+
+# --- traffic / MITM ---
+tcpdump
+wireshark
+tshark
+ettercap
+socat
+tcpreplay
+hping3
+
+# --- web ---
+nikto
+sqlmap
+gobuster
+ffuf
+wfuzz
+
+# --- passwords / cracking ---
+hydra
+john
+hashcat
+hashid
+
+# --- wireless ---
+aircrack-ng
+
+# --- reversing / forensics ---
+radare2
+binwalk
+yara
+foremost
+sleuthkit
+
+# --- exploitation frameworks / libs ---
+py-impacket
+# (Metasploit: no reliable FreeBSD port — see gaps below)
+
+# --- privacy / crypto ---
+tor
+gnupg
+wireguard-tools
+openvpn
+
+# --- base workstation tooling ---
+bash
+sudo
+doas
+tmux
+vim
+git
+curl
+wget
+python3
+
+# ---------------------------------------------------------------------------
+# KNOWN GAPS (no clean native FreeBSD port as of writing — handle explicitly):
+#   metasploit    -> run in a Linux jail/VM, or linuxulator (fragile)
+#   burpsuite     -> Java app; install manually from vendor, not via pkg
+#   responder     -> Python; pip install in a venv, verify BSD compatibility
+#   bettercap     -> check net/bettercap; may lag Linux features
+#   set (SET)     -> Social-Engineer Toolkit; Linux-oriented, use a VM
+# ---------------------------------------------------------------------------

@@ -1,0 +1,18 @@
+# FrostBSD service + hardening defaults.
+# Appended to /etc/rc.conf by build-frostbsd.sh. Edit to taste.
+
+# --- Qoin core (Stage 1: the daemon ships now, so it's on) ---
+qoind_enable="YES"
+qoind_datadir="/var/db/qoin"
+qoind_interval="15"
+
+# --- sane hardening defaults ---
+clear_tmp_enable="YES"          # wipe /tmp on boot
+syslogd_flags="-ss"             # no open syslog sockets
+sendmail_enable="NONE"          # no MTA listening
+dumpdev="NO"                    # no crash dumps to disk by default
+# SSH is off by default on a security workstation; turn on deliberately:
+sshd_enable="NO"
+
+# --- console ---
+keymap="us.kbd"

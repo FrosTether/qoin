@@ -1,0 +1,99 @@
+#!/bin/sh
+#
+# qoind — FrostBSD Qoin core service (Stage 1 scaffold).
+#
+# HONEST SCOPE: this manages the local Qoin data directory and emits a
+# heartbeat so the service is real, supervised, and observable. It does NOT
+# network with peers, run consensus, mine, or issue coins — that is Stage 3.
+# Nothing here creates value; it is the boot-time skeleton the real node
+# drops into.
+#
+#   Project: https://finux.tech      Coin: https://frostcoin.io
+#
+# Dependency-free: POSIX sh + FreeBSD base utils only (no pkg required).
+#
+set -eu
+
+VERSION="0.1.0-stage1"
+HOMEPAGE="https://finux.tech"
+COIN="https://frostcoin.io"
+
+DATADIR="/var/db/qoin"
+INTERVAL=15
+cmd="run"
+
+usage() {
+	cat <<EOF
+qoind ${VERSION} — FrostBSD Qoin core (Stage 1 scaffold)
+usage: qoind [--datadir DIR] [--interval SECONDS] [run|status|init]
+       qoind --version
+  run     supervise the data dir and heartbeat (default; used by rc.d)
+  status  print node id and last heartbeat
+  init    create the data dir and node identity, then exit
+  ${COIN}  ·  ${HOMEPAGE}
+EOF
+}
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--datadir)  DATADIR="$2"; shift 2 ;;
+		--interval) INTERVAL="$2"; shift 2 ;;
+		--version)  echo "qoind ${VERSION}  ${COIN}  ${HOMEPAGE}"; exit 0 ;;
+		-h|--help)  usage; exit 0 ;;
+		run|status|init) cmd="$1"; shift ;;
+		*) echo "qoind: unknown argument: $1" >&2; exit 2 ;;
+	esac
+done
+
+log() { logger -t qoind "$*" 2>/dev/null || true; printf 'qoind: %s\n' "$*"; }
+
+new_node_id() {
+	nid=""
+	if command -v sha256 >/dev/null 2>&1; then
+		nid=$(dd if=/dev/urandom bs=16 count=1 2>/dev/null | sha256 -q 2>/dev/null || true)
+	fi
+	[ -n "$nid" ] || nid=$(od -An -N16 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n' || true)
+	[ -n "$nid" ] || nid=$(hostname)$$
+	printf 'FROST-%s\n' "$(printf '%s' "$nid" | cut -c1-16 | tr '[:lower:]' '[:upper:]')"
+}
+
+init_datadir() {
+	mkdir -p "${DATADIR}/state" "${DATADIR}/keys"
+	chmod 0750 "${DATADIR}" "${DATADIR}/keys" 2>/dev/null || true
+	if [ ! -f "${DATADIR}/state/node.id" ]; then
+		new_node_id > "${DATADIR}/state/node.id"
+		{
+			printf 'created=%s\n' "$(date -u +%FT%TZ)"
+			printf 'version=%s\n' "${VERSION}"
+			printf 'homepage=%s\n' "${HOMEPAGE}"
+		} > "${DATADIR}/state/node.meta"
+		log "initialized ${DATADIR} (node $(cat "${DATADIR}/state/node.id"))"
+	fi
+}
+
+case "$cmd" in
+	init)
+		init_datadir
+		;;
+	status)
+		if [ -f "${DATADIR}/state/heartbeat" ]; then
+			echo "qoind  ${VERSION}"
+			echo "node   $(cat "${DATADIR}/state/node.id" 2>/dev/null || echo unknown)"
+			echo "beat   $(cat "${DATADIR}/state/heartbeat")"
+			echo "state  scaffold running — no network/consensus yet (Stage 3)"
+			echo "links  ${COIN}  ${HOMEPAGE}"
+		else
+			echo "qoind: not running (no heartbeat under ${DATADIR}/state)"
+			exit 1
+		fi
+		;;
+	run)
+		init_datadir
+		log "starting ${VERSION} datadir=${DATADIR} interval=${INTERVAL}s"
+		trap 'log "stopping"; exit 0' TERM INT
+		while :; do
+			date -u +%FT%TZ > "${DATADIR}/state/heartbeat"
+			sleep "${INTERVAL}"
+		done
+		;;
+esac

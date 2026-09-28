@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# FrostBSD: the Qoin core service.
+# Wires a Qoin/Qoinchain node + wallet daemon into the base system so it is
+# present on every boot — the "Qoin at the core" of FrostBSD.
+#
+# NOTE: /usr/local/bin/qoind is Stage 3 and not shipped yet. This rc.d script
+# is real and correct now; when the daemon lands, `sysrc qoind_enable=YES`
+# turns it on with no other changes. Until then it stays disabled (default NO)
+# and does nothing.
+#
+# PROVIDE: qoind
+# REQUIRE: NETWORKING DAEMON
+# KEYWORD: shutdown
+
+. /etc/rc.subr
+
+name="qoind"
+desc="Qoin core service (wallet / personhood / dividend)"
+rcvar="qoind_enable"
+
+load_rc_config $name
+
+: ${qoind_enable:="NO"}
+: ${qoind_user:="qoin"}
+: ${qoind_datadir:="/var/db/qoin"}
+: ${qoind_program:="/usr/local/bin/qoind"}
+: ${qoind_flags:=""}
+
+pidfile="/var/run/${name}.pid"
+command="/usr/sbin/daemon"
+command_args="-P ${pidfile} -r -t ${name} -- ${qoind_program} --datadir ${qoind_datadir} ${qoind_flags}"
+
+start_precmd="${name}_precmd"
+
+qoind_precmd()
+{
+	if [ ! -x "${qoind_program}" ]; then
+		warn "qoind is enabled but ${qoind_program} is not installed yet (Stage 3). Skipping."
+		return 1
+	fi
+	if [ ! -d "${qoind_datadir}" ]; then
+		install -d -o "${qoind_user}" -g "${qoind_user}" -m 0750 "${qoind_datadir}"
+	fi
+}
+
+run_rc_command "$1"

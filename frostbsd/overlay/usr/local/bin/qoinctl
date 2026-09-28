@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# qoinctl — quick control + status for the FrostBSD Qoin core service.
+#   frostcoin.io · finux.tech
+#
+set -eu
+
+case "${1:-status}" in
+	status)
+		exec /usr/local/bin/qoind status
+		;;
+	start|stop|restart)
+		exec service qoind "$1"
+		;;
+	id)
+		cat /var/db/qoin/state/node.id 2>/dev/null || { echo "no node id yet — start qoind"; exit 1; }
+		;;
+	-h|--help)
+		echo "usage: qoinctl [status|start|stop|restart|id]"
+		;;
+	*)
+		echo "qoinctl: unknown command: $1" >&2
+		echo "usage: qoinctl [status|start|stop|restart|id]" >&2
+		exit 2
+		;;
+esac

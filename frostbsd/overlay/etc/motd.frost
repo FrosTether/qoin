@@ -1,0 +1,15 @@
+
+    ███████╗██████╗  ██████╗ ███████╗████████╗██████╗ ███████╗██████╗
+    ██╔════╝██╔══██╗██╔═══██╗██╔════╝╚══██╔══╝██╔══██╗██╔════╝██╔══██╗
+    █████╗  ██████╔╝██║   ██║███████╗   ██║   ██████╔╝███████╗██║  ██║
+    ██╔══╝  ██╔══██╗██║   ██║╚════██║   ██║   ██╔══██╗╚════██║██║  ██║
+    ██║     ██║  ██║╚██████╔╝███████║   ██║   ██████╔╝███████║██████╔╝
+    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   ╚═════╝ ╚══════╝╚═════╝
+
+    FrostBSD  ·  FreeBSD-derived  ·  Qoin core  ·  security userland
+    frostcoin.io  ·  finux.tech            run: qoinctl status
+
+    This is a derivative of FreeBSD. It is not affiliated with the FreeBSD
+    Foundation, Kali Linux, or Offensive Security. Use the security tools
+    only on systems you own or are authorized to test.
+
