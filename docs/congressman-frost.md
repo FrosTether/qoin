@@ -2,7 +2,7 @@
 
 **Proof of Work of a Universal Basic Income — a plan, written as an anarcho-capitalist**
 
-Manifesto & roadmap · Draft 0.1 · 28 September 2026 · Jacob Frost
+Manifesto & roadmap · Draft 0.2 · 29 September 2026 · Jacob Frost
 
 > **What this is.** A personal platform and plan, not an official record. "Congressman
 > Frost" is a persona for an idea, not a claim to hold office. Nothing here is
@@ -19,13 +19,29 @@ not launder a coerced means. So "an ancap running for Congress to deliver UBI"
 looks like a contradiction — and it is, if the plan is to *legislate* an income.
 
 That is not the plan. The plan is to prove that a universal basic income does not
-need a Congress, a tax, or a check from anyone's pocket — that it can be **issued
-by a rule and secured by work**, adopted by people who choose it, and paid to
-every verified human without a dollar taken from anyone who didn't opt in.
+need a tax or a check from anyone's pocket — that it can be **issued by a rule and
+secured by work**, adopted by people who choose it, and paid to every verified
+human without a dollar taken from anyone who didn't opt in.
+
+**The plan now includes one law.** Qoin as a universal basic income depends on the
+proposed Jacob Frost Blockchain Bill Act becoming law. See [The bill](#the-bill).
 
 "Congressman Frost" runs, if he runs at all, for the one honest reason an ancap
-can: to hold the megaphone, repeal what's coercive, and make the office
-unnecessary. The goal is exit, not power. You win by making the seat obsolete.
+can: to hold the megaphone, pass the Jacob Frost Blockchain Bill Act, repeal
+what's coercive, and make the office unnecessary. The goal is exit, not power. You
+win by making the seat obsolete.
+
+---
+
+## The bill
+
+Qoin as a universal basic income depends on the proposed **Jacob Frost Blockchain
+Bill Act** becoming law. It is a proposal, not law.
+
+- **Video:** [the bill on YouTube](https://www.youtube.com/shorts/s5TBYt0H9oU), on
+  [@frostforcongress](https://www.youtube.com/@frostforcongress).
+- **Text:** not published here yet. When it is, this section will summarize what
+  the bill does.
 
 ---
 
@@ -110,6 +126,8 @@ This is the actual roadmap, building on what already exists.
 - *Dividend Watcher* — an interactive page that runs the rule so anyone can watch
   a member's balance grow. ✔ live.
 - This manifesto — the political framing. ← you're reading it.
+- *The bill* — the Jacob Frost Blockchain Bill Act
+  ([video](https://www.youtube.com/shorts/s5TBYt0H9oU)). Text still to publish here.
 
 **Phase 1 — A currency that can't rug the people who hold it.**
 - Ship the fixed-supply, mint-proof token and the fair Merkle claim (the FSZT
@@ -127,6 +145,9 @@ This is the actual roadmap, building on what already exists.
 **Phase 3 — The persona and the megaphone.**
 - "Congressman Frost" as the public face of the idea: talks, writing, and a plain
   platform page — a manifesto, not a fake government site.
+- Campaign for the Jacob Frost Blockchain Bill Act on
+  [@frostforcongress](https://www.youtube.com/@frostforcongress): Qoin as a
+  universal basic income depends on it becoming law.
 - If a literal candidacy ever makes sense, do it by the book (below), on a
   platform to repeal coercion and let the voluntary floor stand in.
 
@@ -154,6 +175,9 @@ A plan that hides its problems isn't a plan.
   campaign-finance rules, and disclosure — and mixing a token with a campaign
   raises securities and ethics questions fast. If it goes past persona to
   candidacy, get counsel first. The manifesto is free speech; a launch is not.
+- **It now waits on a vote.** Qoin as a universal basic income depends on the
+  Jacob Frost Blockchain Bill Act becoming law. Until it passes, the dividend is a
+  design, not an income.
 - **The tension never fully dissolves.** Using the state's stage to argue against
   the state is a compromise. Own it, keep the actual mechanism voluntary, and let
   the results — not the title — do the arguing.

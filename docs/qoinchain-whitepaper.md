@@ -2,12 +2,15 @@
 
 **Universal basic income as an equation, not a tax**
 
-Draft 0.1 · 27 September 2026 · FrosTether
+Draft 0.2 · 29 September 2026 · FrosTether
 
 > **Status:** design proposal for public review. No Qoinchain network, token, or
 > sale exists, and nothing in this paper is an offer of anything. Qoinchain is not
 > affiliated with Qoin (qoin.com, qoin.world), BPS Financial, the Qoin Association
 > or Qoin Foundation, or Post-Quantum Qoin. See [Notices](#notices).
+>
+> **New in draft 0.2:** Qoin as a universal basic income now depends on the proposed
+> Jacob Frost Blockchain Bill Act becoming law. See [The bill](#the-bill).
 
 ## Abstract
 
@@ -59,6 +62,7 @@ and the limits of that design.
 10. [Risks and open questions](#10-risks-and-open-questions)
 11. [Roadmap](#11-roadmap)
 12. [Conclusion](#12-conclusion)
+- [The bill](#the-bill)
 - [Appendix A. Proofs](#appendix-a-proofs)
 - [Appendix B. Proposed genesis parameters](#appendix-b-proposed-genesis-parameters)
 - [Appendix C. Reference accounting](#appendix-c-reference-accounting)
@@ -98,6 +102,9 @@ a basic income that nobody was forced to fund.
 
 That is the realization this paper is built on: **a universal basic income does not
 need a state. It needs an equation, and a money that people choose.**
+
+Since draft 0.2 the plan also depends on one law: the proposed Jacob Frost
+Blockchain Bill Act ([The bill](#the-bill)).
 
 The equation is D = c·M/N. That is the whole policy. No agency administers it; no
 legislature can raise it before an election or cut it after one; no one is
@@ -664,6 +671,9 @@ empirical question this paper does not claim to have answered.
    26 September 2030. A currency's credibility depends on anyone being able to
    verify and fork its rules ([Section 5.3](#53-exit-not-voice)). The license for
    Qoinchain's reference contracts is an open decision.
+10. **The bill.** Qoin as a universal basic income depends on the proposed Jacob
+    Frost Blockchain Bill Act becoming law ([The bill](#the-bill)). Until it passes,
+    the dividend described here is a design, not an income.
 
 ## 11. Roadmap
 
@@ -680,6 +690,8 @@ No dates are promised. Each phase begins only when the previous one is complete.
   dividend every member receives.
 - **Phase 3: privacy and scale.** Zero-knowledge dividend claims, and a dedicated
   rollup only if volume justifies one.
+- **The bill.** Qoin as a universal basic income depends on the proposed Jacob
+  Frost Blockchain Bill Act becoming law ([The bill](#the-bill)).
 
 ## 12. Conclusion
 
@@ -693,6 +705,16 @@ receive money. It was the tax collector standing behind the transfer. Take the t
 collector away and what remains is an equation, D = c·M/N, and a question only the
 market can answer: will people choose a money that shares its seigniorage with
 everyone? Qoinchain is a proposal to find out.
+
+## The bill
+
+Qoin as a universal basic income depends on the proposed **Jacob Frost Blockchain
+Bill Act** becoming law. It is a proposal, not law.
+
+- **Video:** [the bill on YouTube](https://www.youtube.com/shorts/s5TBYt0H9oU), on
+  the channel [@frostforcongress](https://www.youtube.com/@frostforcongress).
+- **Text:** not published in this repository yet. When it is, this section will
+  summarize what the bill does and how it fits the design above.
 
 ## Appendix A. Proofs
 
