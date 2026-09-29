@@ -1,3 +1,15 @@
+# Qoin
+
+**Qoin is UBI solved.**
+
+Qoin is a privacy coin forked from Wownero. Building and running it, Graysons Wallet, the Frostoise miner, Qoinage, number addresses and coins: see [QOIN_BUILD.md](QOIN_BUILD.md).
+
+Support Qoin: send ETC, or QOIN on Ethereum Classic, to `0x8eA65F5EBBa3870ad0023EF6f275f9a00b9610E6`
+
+---
+
+*Everything below is Wownero's README, kept from upstream. Its donation addresses are Wownero's, not Qoin's.*
+
 # ~~Mo~~Wownero -  Such privacy! Many coins! Wow!
 
 <img src="https://codeberg.org/wownero/meta/raw/commit/e7bd4f0e4520b7dc0a7b0bd01083b12b2667365b/images/wow.gif">
