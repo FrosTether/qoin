@@ -1,6 +1,7 @@
 # Qoin
 
 **Qoin is UBI solved**, once the proposed Jacob Frost Blockchain Bill Act becomes law.
+[The bill on YouTube](https://www.youtube.com/shorts/s5TBYt0H9oU) · [@frostforcongress](https://www.youtube.com/@frostforcongress)
 
 Qoin is a privacy coin forked from Wownero. Building and running it, Graysons Wallet, the Frostoise miner, Qoinage, number addresses and coins: see [QOIN_BUILD.md](QOIN_BUILD.md).
 
