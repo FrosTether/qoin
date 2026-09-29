@@ -16,9 +16,13 @@
 set -eu
 
 # ---- config (edit these) --------------------------------------------------
-FREEBSD_VERSION="${FREEBSD_VERSION:-14.2-RELEASE}"
+# Default: the release this host runs (e.g. 14.3-RELEASE-p2 -> 14.3-RELEASE), so the
+# image matches the host's pkg ABI and is a release FreeBSD still supports.
+FREEBSD_VERSION="${FREEBSD_VERSION:-$(freebsd-version -u 2>/dev/null | sed 's/-p[0-9]*$//')}"
 ARCH="${ARCH:-amd64}"
 MIRROR="${MIRROR:-https://download.freebsd.org/releases/${ARCH}/${FREEBSD_VERSION}}"
+# Releases past end of life move here:
+ARCHIVE="${ARCHIVE:-https://ftp-archive.freebsd.org/pub/FreeBSD-Archive/old-releases/${ARCH}/${FREEBSD_VERSION}}"
 IMG_SIZE="${IMG_SIZE:-6g}"          # root image size
 BUILD_TAG="${BUILD_TAG:-FROSTFORPRESIDENT}"   # stamped into the image + filename
 IMG_OUT="${IMG_OUT:-${BUILD_TAG}.img}"
@@ -34,6 +38,7 @@ die() { printf '\033[38;5;196m!! %s\033[0m\n' "$*" >&2; exit 1; }
 
 [ "$(uname -s)" = "FreeBSD" ] || die "This build runs on FreeBSD only (needs pkg -c, makefs, mkimg). Use a FreeBSD VM."
 [ "$(id -u)" = "0" ] || die "Run as root (needs chroot install and device-free image build)."
+[ -n "$FREEBSD_VERSION" ] || die "Can't tell which FreeBSD release to build. Set one: FREEBSD_VERSION=14.3-RELEASE"
 for t in fetch tar pkg makefs mkimg; do command -v "$t" >/dev/null 2>&1 || die "missing tool: $t"; done
 
 log "FrostBSD ${FREEBSD_VERSION}/${ARCH}  ->  ${IMG_OUT}"
@@ -43,7 +48,10 @@ rm -rf "$STAGE"; mkdir -p "$STAGE" "$WORK"
 for set in base kernel; do
   if [ ! -f "${WORK}/${set}.txz" ]; then
     log "fetching ${set}.txz"
-    fetch -o "${WORK}/${set}.txz" "${MIRROR}/${set}.txz"
+    fetch -o "${WORK}/${set}.txz" "${MIRROR}/${set}.txz" \
+      || { log "not on the main mirror; trying the archive of old releases"
+           fetch -o "${WORK}/${set}.txz" "${ARCHIVE}/${set}.txz"; } \
+      || { rm -f "${WORK}/${set}.txz"; die "couldn't download ${set}.txz for ${FREEBSD_VERSION}"; }
   fi
   log "extracting ${set}.txz"
   tar -xpf "${WORK}/${set}.txz" -C "$STAGE"
@@ -105,9 +113,18 @@ log "building filesystem"
 makefs -t ffs -B little -s "$IMG_SIZE" -o label=rootfs \
   "${WORK}/rootfs.ufs" "$STAGE"
 
+# EFI system partition, so UEFI-only laptops boot it too (same layout as FreeBSD's
+# own VM images). Old BIOS machines still boot through pmbr + gptboot.
+log "building EFI boot partition"
+rm -rf "${WORK}/esp"; mkdir -p "${WORK}/esp/EFI/BOOT"
+cp "${STAGE}/boot/loader.efi" "${WORK}/esp/EFI/BOOT/BOOTX64.EFI"
+makefs -t msdos -o fat_type=32 -o sectors_per_cluster=1 -o volume_label=EFISYS \
+  -s 64m "${WORK}/esp.img" "${WORK}/esp"      # FAT32: 64 MB of 512-byte clusters is too many for FAT16
+
 log "assembling GPT image"
 mkimg -s gpt \
   -b "${STAGE}/boot/pmbr" \
+  -p efi:="${WORK}/esp.img" \
   -p freebsd-boot:="${STAGE}/boot/gptboot" \
   -p freebsd-ufs/rootfs:="${WORK}/rootfs.ufs" \
   -o "${IMG_OUT}"

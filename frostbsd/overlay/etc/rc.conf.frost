@@ -9,6 +9,9 @@ qoind_interval="15"
 # --- First-boot provisioning wizard (idempotent; provisions the wallet once) ---
 frostfirstboot_enable="YES"
 
+# --- Grow the root filesystem to fill the disk it's written to (USB stick, laptop drive) ---
+growfs_enable="YES"
+
 # --- sane hardening defaults ---
 clear_tmp_enable="YES"          # wipe /tmp on boot
 syslogd_flags="-ss"             # no open syslog sockets

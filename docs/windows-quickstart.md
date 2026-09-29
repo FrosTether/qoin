@@ -99,13 +99,18 @@ pkg install -y $(grep -v '^#' packages/flavor-kali.pkglist | tr '\n' ' ')
 Some Kali tools have no FreeBSD port (Metasploit, Burp) — see the notes at the
 bottom of `packages/flavor-kali.pkglist`.
 
-## Installing on the laptop's real hardware (not yet)
+## On the laptop's real hardware
 
-You *can* build `FROSTFORPRESIDENT.img`, flash it to a USB stick with
-**balenaEtcher** or **Rufus**, and boot the laptop from it — but that path can
-**erase Windows and your files**. Back up everything first, and wait until
-FrostBSD is past the console-scaffold stage before making it your daily OS. Try
-it in the VM first.
+Build `FROSTFORPRESIDENT.img`, write it to a USB stick (8 GB or more) with
+**balenaEtcher** or **Rufus** (in Rufus, pick DD image mode), and boot the laptop
+from the stick. That erases only the stick: Windows stays as it was. The one real
+danger is choosing the laptop's own drive as the target, which **erases Windows
+and your files**, so check the target twice.
+
+Turn off **Secure Boot** in the laptop's firmware settings first; FreeBSD's boot
+loader isn't signed for it. The image boots on UEFI and older BIOS laptops. Full
+steps: `frostbsd/README.md` → *On your laptop*. It's still a console scaffold, so
+keep Windows as your daily OS for now.
 
 ## Troubleshooting
 

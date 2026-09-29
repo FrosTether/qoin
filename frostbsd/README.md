@@ -32,21 +32,64 @@ Useful overrides (environment variables):
 # Name the output image whatever you like:
 sudo env IMG_OUT=Blockcoin.img sh build/build-frostbsd.sh
 
-# Pin a different release / arch / size:
-sudo env FREEBSD_VERSION=14.2-RELEASE ARCH=amd64 IMG_SIZE=8g sh build/build-frostbsd.sh
+# Pin a release / arch / size (the release defaults to the one this host runs):
+sudo env FREEBSD_VERSION=14.3-RELEASE ARCH=amd64 IMG_SIZE=8g sh build/build-frostbsd.sh
 ```
 
-Output: `frostbsd.img` (or your `IMG_OUT`), a GPT + UFS bootable raw image.
+Output: `FROSTFORPRESIDENT.img` (or your `IMG_OUT`), a GPT raw image with a UFS root
+that boots on both UEFI and older BIOS machines.
 
 ## Boot it
 
 ```sh
-qemu-system-x86_64 -m 2048 -drive file=frostbsd.img,format=raw -nographic
+qemu-system-x86_64 -m 2048 -drive file=FROSTFORPRESIDENT.img,format=raw -nographic
 ```
 
 You should reach a login with the Frost MOTD. Log in as `root` (no password on the
 fresh base image — **set one immediately**, this starter is not hardened for
 exposure).
+
+## On your laptop
+
+Safest first. Neither way touches what's already on the laptop.
+
+**In a window** (Linux laptop): `sudo apt install qemu-system-x86`, then
+`qemu-system-x86_64 -enable-kvm -m 1024 -drive file=FROSTFORPRESIDENT.img,format=raw`
+
+**From a USB stick** (8 GB or more; it gets erased):
+
+1. Find the stick with `lsblk`. Double-check it: the wrong device erases your laptop's drive.
+2. `sudo dd if=FROSTFORPRESIDENT.img of=/dev/sdX bs=4M status=progress conv=fsync`,
+   or use balenaEtcher.
+3. Restart into the boot menu (usually F12, F9, F11 or Esc as it starts) and pick
+   the stick. It boots on UEFI and older BIOS laptops, but **turn off Secure Boot**
+   first: FreeBSD's boot loader isn't signed for it.
+4. Finux runs from the stick and grows to fill it on the first boot. Log in as
+   `root` and set a password.
+
+It's a console system for now, with no desktop yet. Wired Ethernet or USB tethering
+from a phone is the easy way online: FreeBSD supports only some laptop Wi-Fi chips.
+
+**Building from a Linux laptop.** The build needs FreeBSD, so run it in a FreeBSD
+virtual machine. Download the newest FreeBSD 14 VM image (`.qcow2.xz`, from
+download.freebsd.org → releases → VM-IMAGES), unpack it with `xz -d`, make room
+with `qemu-img resize FILE.qcow2 +20G`, and start it:
+
+```sh
+qemu-system-x86_64 -enable-kvm -m 1536 -drive file=FILE.qcow2 \
+  -nic user,hostfwd=tcp:127.0.0.1:45700-:45700
+```
+
+Log in as `root`, then inside FreeBSD:
+
+```sh
+pkg install -y git python3
+git clone -b claude/qoinchain-white-paper-iu8yep https://github.com/FrosTether/qoin
+cd qoin && sh frostbsd/build/build-frostbsd.sh
+frostbsd/share/finux-share lan
+```
+
+On the laptop, open http://127.0.0.1:45700/ and download the image.
 
 ## Share it: home network first, then the internet
 

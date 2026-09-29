@@ -69,7 +69,8 @@ fine). The starter script `build/build-frostbsd.sh` does the minimal real path:
 3. **Apply the overlay** — drop `overlay/` over the stage: `rc.d/qoind`, a Frost
    `motd`, `rc.conf` service enables, `loader.conf` branding.
 4. **Make it bootable** — build a UFS root with `makefs`, wrap it in a GPT image
-   with `mkimg` (`freebsd-boot` + `freebsd-ufs`), output `frostbsd.img`.
+   with `mkimg` (`efi` + `freebsd-boot` + `freebsd-ufs`, so it boots on UEFI and
+   BIOS machines), output `FROSTFORPRESIDENT.img`.
 5. **Test** — boot the image in QEMU.
 
 For production later, graduate to FreeBSD's `release(7)` (`make release`) with a
@@ -82,7 +83,7 @@ For production later, graduate to FreeBSD's `release(7)` (`make release`) with a
 
 Each stage produces something that actually boots or runs.
 
-- **Stage 0 — Boot a branded base.** Run `build-frostbsd.sh`, get a `frostbsd.img`
+- **Stage 0 — Boot a branded base.** Run `build-frostbsd.sh`, get a `FROSTFORPRESIDENT.img`
   that boots to a login with the Frost MOTD in QEMU. *This is where the starter
   gets you.*
 - **Stage 1 — The flavor.** Curated security toolset installs cleanly; document
