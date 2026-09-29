@@ -1,0 +1,13 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.24"
+optimizer = true
+optimizer_runs = 200
+# ETC has Shanghai's PUSH0 (Spiral fork) but no Cancun opcodes
+evm_version = "shanghai"
+
+[rpc_endpoints]
+etc = "${ETC_RPC_URL}"
+mordor = "${MORDOR_RPC_URL}"
