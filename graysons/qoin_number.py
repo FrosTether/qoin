@@ -136,8 +136,8 @@ def _width(size: int) -> int:
 
 
 # ---------------------------------------------------------------------------
-def to_number(address: str) -> str:
-    """The number address (digits only) for a usual Qoin address."""
+def unpack(address: str):
+    """(prefix, body, checksum) of a usual Qoin address, with the checksum checked."""
     address = (address or "").strip()
     try:
         raw = b58decode(address)
@@ -148,10 +148,23 @@ def to_number(address: str) -> str:
     for prefix, size in BODY_BYTES.items():
         tag = _varint(prefix)
         if raw.startswith(tag) and len(raw) == len(tag) + size + 4:
-            body = int.from_bytes(raw[len(tag):-4], "big")
-            check = int.from_bytes(raw[-4:], "big")
-            return f"{prefix}{body:0{_width(size)}d}{check:0{CHECK_DIGITS}d}"
+            return prefix, raw[len(tag):-4], raw[-4:]
     raise NumberError("That isn't a Qoin address")
+
+
+def pack(prefix: int, body: bytes, check: bytes) -> str:
+    """The usual Qoin address for a prefix, body and checksum. NumberError if the checksum doesn't match."""
+    raw = _varint(prefix) + body
+    if keccak256(raw)[:4] != check:
+        raise NumberError(TYPO)
+    return b58encode(raw + check)
+
+
+def to_number(address: str) -> str:
+    """The number address (digits only) for a usual Qoin address."""
+    prefix, body, check = unpack(address)
+    return (f"{prefix}{int.from_bytes(body, 'big'):0{_width(len(body))}d}"
+            f"{int.from_bytes(check, 'big'):0{CHECK_DIGITS}d}")
 
 
 def _split(number: str):
@@ -176,10 +189,7 @@ def from_number(number: str) -> str:
     check = int(digits[-CHECK_DIGITS:])
     if body >> (8 * size) or check >> 32:
         raise NumberError(TYPO)
-    raw = _varint(prefix) + body.to_bytes(size, "big")
-    if keccak256(raw)[:4] != check.to_bytes(4, "big"):
-        raise NumberError(TYPO)
-    return b58encode(raw + check.to_bytes(4, "big"))
+    return pack(prefix, body.to_bytes(size, "big"), check.to_bytes(4, "big"))
 
 
 def group(number: str) -> str:

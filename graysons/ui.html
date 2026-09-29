@@ -73,6 +73,10 @@ input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); ou
 .mono.num { word-break: normal; overflow-wrap: anywhere; }   /* number address: wrap between blocks of five */
 .numlabel { font-size: 13px; color: var(--muted); margin: 12px 0 2px; }
 td .num { margin-top: 4px; }
+.coinrow { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.coin { width: 300px; max-width: 100%; aspect-ratio: 1; flex: none; }
+.modal .coin { display: block; width: min(440px, 100%); margin: 4px auto 0; }
+.btn.small { padding: 4px 10px; font-size: 13px; }
 
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -214,6 +218,7 @@ nav a.gold.on { background: var(--gold); color: var(--gold-text); }
       <form class="card" id="f-send">
         <label for="s-addr">Recipient address</label>
         <input id="s-addr" type="text" class="mono" autocomplete="off" spellcheck="false" placeholder="Qoin address, or number address (9999…)">
+        <div class="row" style="margin-top:8px"><button class="btn small" type="button" id="s-coin-btn">Read a coin picture</button><input id="s-coin" type="file" accept="image/*" hidden></div>
         <label for="s-amt">Amount (QOIN)</label>
         <input id="s-amt" type="text" inputmode="decimal" autocomplete="off">
         <label for="s-pri">Fee priority</label>
@@ -247,9 +252,23 @@ nav a.gold.on { background: var(--gold); color: var(--gold-text); }
         <p class="muted" style="font-size:13px">Mining rewards from Frostoise always go here. The number address is this same address in digits only, easy to read out or type on a keypad. People can pay either one.</p>
       </div>
       <div class="card">
+        <h3>Coin</h3>
+        <div class="coinrow">
+          <img class="coin" id="r-coin" alt="Your primary address as a coin">
+          <div style="flex:1;min-width:200px">
+            <p class="muted" style="font-size:14px;margin-top:0">Your primary address as a picture: 552 spots on 4 rings, read clockwise from the axis. Share the picture instead of the digits. Graysons reads it back under Send → Read a coin picture.</p>
+            <div class="row" style="margin-top:0">
+              <button class="btn" id="r-coin-save">Save coin picture</button>
+              <label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--text)"><input type="checkbox" id="r-coin-dark"> Dark coin</label>
+            </div>
+            <div id="r-coin-msg" class="msg"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
         <h3>Subaddresses</h3>
         <p class="muted" style="font-size:14px;margin-top:0">Give each payer their own subaddress so payments can't be linked to each other.</p>
-        <table><thead><tr><th>#</th><th>Label</th><th>Address</th></tr></thead><tbody id="subs"></tbody></table>
+        <table><thead><tr><th>#</th><th>Label</th><th>Address</th><th></th></tr></thead><tbody id="subs"></tbody></table>
         <form class="row" id="f-sub"><input id="sub-label" type="text" placeholder="Label (optional)" style="flex:1;min-width:160px"><button class="btn" type="submit">New subaddress</button></form>
       </div>
     </section>
@@ -361,6 +380,7 @@ function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<"
 function short(s, n = 10) { return s.length > 2 * n + 1 ? s.slice(0, n) + "…" + s.slice(-n) : s; }
 function when(ts) { return ts ? new Date(ts * 1000).toLocaleString([], { dateStyle: "short", timeStyle: "short" }) : "pending"; }
 async function busy(btn, fn) { btn.disabled = true; try { return await fn(); } finally { btn.disabled = false; } }
+function b64(bytes) { let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); }
 // A number address is shown in blocks of five and copied as plain digits.
 function copyable(el) { el.onclick = () => { navigator.clipboard.writeText(el.classList.contains("num") ? el.textContent.replace(/\s+/g, "") : el.textContent); const t = el.title; el.title = "Copied"; setTimeout(() => el.title = t, 1200); }; }
 copyable($("addr")); copyable($("r-primary")); copyable($("addr-num")); copyable($("r-primary-num"));
@@ -477,8 +497,11 @@ async function refresh() {
   $("subs").innerHTML = summary.addresses.filter(a => a.index > 0).map(a =>
     `<tr><td>${a.index}</td><td>${esc(a.label || "")}</td><td><div class="mono copy" title="Click to copy">${esc(a.address)}</div>`
     + (a.number ? `<div class="mono num muted copy" title="Click to copy the number address">${esc(a.number)}</div>` : "")
-    + `</td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet</td></tr>`;
+    + `</td><td><button class="btn small" type="button" data-coin="${esc(a.address)}" data-title="${esc(`Subaddress #${a.index}` + (a.label ? ` · ${a.label}` : ""))}">Coin</button></td></tr>`).join("")
+    || `<tr><td colspan="4" class="muted">None yet</td></tr>`;
   $("subs").querySelectorAll(".copy").forEach(copyable);
+  $("subs").querySelectorAll("[data-coin]").forEach(b => b.onclick = () => showCoin(b.dataset.coin, b.dataset.title));
+  showPrimaryCoin();
   loadHistory(true);
 }
 
@@ -522,6 +545,74 @@ $("sr-go").onclick = (e) => busy(e.target, async () => {
 
 /* ---------- receive ---------- */
 $("f-sub").onsubmit = (e) => { e.preventDefault(); busy(e.submitter, async () => { await api("/api/wallet/new_address", { label: $("sub-label").value }).catch(() => {}); $("sub-label").value = ""; refresh(); }); };
+
+/* ---------- coins: an address as a picture ---------- */
+const coins = new Map();
+const coinDark = () => $("r-coin-dark").checked;   // a dark coin: gold on near-black
+function coinSvg(address) {
+  const dark = coinDark(), key = address + (dark ? " dark" : "");
+  if (!coins.has(key)) coins.set(key, api("/api/coin/svg", { address, dark }).then(r => r.svg).catch(err => { coins.delete(key); throw err; }));
+  return coins.get(key);
+}
+const svgUrl = (svg) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+
+function showPrimaryCoin() {
+  const key = summary.address + (coinDark() ? " dark" : "");
+  if ($("r-coin").dataset.key === key) return;
+  $("r-coin").dataset.key = key;
+  coinSvg(summary.address).then(svg => { $("r-coin").src = svgUrl(svg); }).catch(err => say($("r-coin-msg"), err.message, "err"));
+}
+
+async function saveCoin(address) {
+  const img = new Image(); img.src = svgUrl(await coinSvg(address)); await img.decode();
+  const c = document.createElement("canvas"); c.width = c.height = 1024;
+  c.getContext("2d").drawImage(img, 0, 0, 1024, 1024);
+  const a = document.createElement("a"); a.href = c.toDataURL("image/png");
+  a.download = `qoin-coin-${address.slice(0, 8)}${coinDark() ? "-dark" : ""}.png`;
+  document.body.append(a); a.click(); a.remove();
+}
+
+async function showCoin(address, title) {
+  $("modal-body").innerHTML = `<h2>${esc(title)}</h2><img class="coin" id="coin-big" alt="">
+    <div class="row"><button class="btn primary" id="coin-save">Save coin picture</button><button class="btn" id="coin-close">Close</button></div><div id="coin-msg" class="msg"></div>`;
+  $("modal").classList.remove("hidden");
+  $("coin-close").onclick = () => { $("modal").classList.add("hidden"); $("modal-body").innerHTML = ""; };
+  $("coin-save").onclick = (e) => busy(e.target, () => saveCoin(address).catch(err => say($("coin-msg"), err.message, "err")));
+  try { $("coin-big").src = svgUrl(await coinSvg(address)); } catch (err) { say($("coin-msg"), err.message, "err"); }
+}
+
+// What /api/coin/read takes: the picture's greyscale pixels, deflated. Big pictures are scaled down to 1600 px.
+async function readCoin(file) {
+  let bmp;
+  try { bmp = await createImageBitmap(file); } catch (e) { throw new Error("That file isn't a picture this browser can open."); }
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(bmp, 0, 0, w, h);
+  const d = g.getImageData(0, 0, w, h).data, gray = new Uint8Array(w * h);
+  for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (d[j] * 77 + d[j + 1] * 150 + d[j + 2] * 29) >> 8;
+  const z = new Uint8Array(await new Response(new Blob([gray]).stream().pipeThrough(new CompressionStream("deflate"))).arrayBuffer());
+  return api("/api/coin/read", { width: w, height: h, gray: b64(z) });
+}
+
+$("r-coin-save").onclick = (e) => busy(e.target, () => summary && saveCoin(summary.address).catch(err => say($("r-coin-msg"), err.message, "err")));
+// Dark coin follows the screen's dark mode until you pick; the pick is remembered in this browser.
+let savedDark = null;
+try { savedDark = localStorage.getItem("graysons-coin-dark"); } catch (e) {}
+$("r-coin-dark").checked = savedDark === null ? matchMedia("(prefers-color-scheme: dark)").matches : savedDark === "1";
+$("r-coin-dark").onchange = () => {
+  try { localStorage.setItem("graysons-coin-dark", coinDark() ? "1" : "0"); } catch (e) {}
+  if (summary) showPrimaryCoin();
+};
+$("s-coin-btn").onclick = () => $("s-coin").click();
+$("s-coin").onchange = () => {
+  const f = $("s-coin").files[0]; $("s-coin").value = "";
+  if (f) busy($("s-coin-btn"), async () => {
+    say($("send-msg"), "Reading the coin…");
+    try { const r = await readCoin(f); $("s-addr").value = r.address; say($("send-msg"), "Read the coin: " + short(r.address, 12), "ok"); }
+    catch (err) { say($("send-msg"), err.message, "err"); }
+  });
+};
 
 /* ---------- frostoise ---------- */
 $("m-threads").oninput = () => { $("m-threads").dataset.touched = 1; $("m-tval").textContent = $("m-threads").value; };
@@ -624,9 +715,7 @@ function toPcm8k(samples, rate) {
     let s = 0; for (let i = a; i < b; i++) s += samples[i];
     out[j] = Math.max(-32768, Math.min(32767, Math.round(s / (b - a) * 32767)));
   }
-  const bytes = new Uint8Array(out.buffer); let bin = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-  return btoa(bin);
+  return b64(new Uint8Array(out.buffer));
 }
 
 async function hummCheck(msgEl, tuner) {

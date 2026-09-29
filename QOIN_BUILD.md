@@ -72,6 +72,18 @@ Every Qoin address can also be written in digits only. Graysons Wallet shows you
 
 Tests: `cd graysons && python3 -m unittest test_qoin_number -v` (standard library only).
 
+### Coins
+
+A coin is an address as a picture: 552 spots on 4 rings around a spot in the middle, with an axis pointing up. Graysons Wallet shows your coin under **Receive**. **Save coin picture** saves it as a PNG to share, and each subaddress has a **Coin** button too. On **Send**, **Read a coin picture** turns a coin picture back into its address.
+
+- Each spot sits just inside its ring for a 0 or just outside it for a 1, read clockwise from the axis, inner ring first. A coin carries what the number address carries, so it needs no lookup either.
+- It reads at any angle, mirrored, from about 250 pixels across, and from screenshots and squashed chat-app JPEGs. A damaged picture is refused, never read as a different address, because the address checksum travels with it.
+- **Dark coin** draws it gold on near-black and reads the same way. Graysons picks it when your screen is in dark mode.
+- It's made for pictures, not camera photos: a photo taken at an angle bends the circle, and that isn't handled yet.
+- Only primary addresses and subaddresses make coins. From a terminal: `python3 graysons/qoin_coin.py <address or number> coin.svg` (add `--dark` for a dark coin).
+
+Tests: `cd graysons && python3 -m unittest test_qoin_coin -v` (standard library only).
+
 ## Not yet built: the Bitcoin Cash timing oracle
 
 The BCH-driven 159s / 161s / 1s cycle is a separate protocol layer. The phases add up to 321s against the 300s block time; decide whether the block time or the phases change, and it can be specced from there.

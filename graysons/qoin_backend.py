@@ -10,6 +10,7 @@ Serves the UI on 127.0.0.1 only. Every API call must carry the per-launch token 
 is embedded in the page, so other websites open in the browser cannot drive the wallet.
 """
 import argparse
+import base64
 import decimal
 import functools
 import hashlib
@@ -28,10 +29,12 @@ import time
 import urllib.error
 import urllib.request
 import webbrowser
+import zlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import humm
+import qoin_coin
 import qoin_number
 from qoin_number import keccak256
 
@@ -55,6 +58,7 @@ DEFAULT_SETTINGS = {
     "qoinage_url": "http://127.0.0.1:45690",   # the Qoinage vault "Open Qoinage" goes to
 }
 HUMM_VALID_S = 120          # a good hum covers one send (or turning the lock off) within 2 minutes
+COIN_PICTURE_MAX = 2048     # widest or tallest coin picture the page may send, in pixels
 
 
 # ---------------------------------------------------------------------------
@@ -95,6 +99,11 @@ def number_address(address: str) -> str:
         return qoin_number.group(qoin_number.to_number(address))
     except qoin_number.NumberError:
         return ""
+
+
+@functools.lru_cache(maxsize=64)
+def coin_svg(address: str, dark: bool) -> str:
+    return qoin_coin.svg(address, dark)
 
 
 class ApiError(Exception):
@@ -461,6 +470,30 @@ class Qoin:
         self.need_wallet()
         return {"seed": self.wallet_rpc.call("query_key", {"key_type": "mnemonic"})["key"]}
 
+    # ---- coins: an address as a picture -----------------------------------------
+    def coin(self, address, dark=False):
+        try:
+            return {"svg": coin_svg(qoin_number.as_address(address), bool(dark))}
+        except (qoin_number.NumberError, qoin_coin.CoinError) as e:
+            raise ApiError(str(e))
+
+    def read_coin(self, width, height, gray):
+        """The address on a coin picture. The page sends its greyscale pixels, deflated and in base64."""
+        try:
+            w, h = int(width), int(height)
+            if not (64 <= w <= COIN_PICTURE_MAX and 64 <= h <= COIN_PICTURE_MAX):
+                raise ValueError
+            pixels = zlib.decompressobj().decompress(base64.b64decode(gray or "", validate=True), w * h + 1)
+        except (TypeError, ValueError, zlib.error):
+            raise ApiError("Graysons couldn't open that picture")
+        if len(pixels) != w * h:
+            raise ApiError("Graysons couldn't open that picture")
+        try:
+            address = qoin_coin.read(pixels, w, h)
+        except qoin_coin.CoinError as e:
+            raise ApiError(str(e))
+        return {"address": address, "number": number_address(address)}
+
     # ---- Qoinage: the HUMM 741 Hz lock ------------------------------------------
     # A ritual on top of the wallet password, not instead of it: anyone can play 741 Hz.
     def check_humm(self, pcm, rate):
@@ -607,7 +640,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(403, {"error": "forbidden"})
         try:
             n = int(self.headers.get("Content-Length", 0))
-            if n > 2_000_000:
+            if n > (12_000_000 if self.path == "/api/coin/read" else 2_000_000):   # a coin picture's pixels
                 return self._send(413, {"error": "request too large"})
             args = json.loads(self.rfile.read(n) or b"{}")
             routes = {
@@ -627,6 +660,8 @@ class Handler(BaseHTTPRequestHandler):
                                                                     args.get("priority", 0)),
                 "/api/wallet/confirm": lambda: APP.confirm_transfer(args.get("id")),
                 "/api/wallet/seed": lambda: APP.reveal_seed(),
+                "/api/coin/svg": lambda: APP.coin(args.get("address"), args.get("dark")),
+                "/api/coin/read": lambda: APP.read_coin(args.get("width"), args.get("height"), args.get("gray")),
                 "/api/mine/start": lambda: APP.start_mining(args.get("threads", 1)),
                 "/api/mine/stop": lambda: APP.stop_mining(),
                 "/api/qoinage/humm": lambda: APP.check_humm(args.get("pcm", ""), args.get("rate", 8000)),
