@@ -48,6 +48,28 @@ You should reach a login with the Frost MOTD. Log in as `root` (no password on t
 fresh base image — **set one immediately**, this starter is not hardened for
 exposure).
 
+## Share it: home network first, then the internet
+
+`share/finux-share` hands the built image to other machines. Run it in the folder
+with the image, or name the files (it takes FrostOS ISOs too):
+
+```sh
+share/finux-share lan                                  # home network, port 45700
+share/finux-share wan you@finux.tech:/var/www/finux --sign ~/.ssh/id_ed25519
+```
+
+- **lan** serves a download page with SHA-256 checksums, and downloads that resume
+  after a dropped connection. It answers only devices on private networks
+  (192.168.x.x, 10.x.x.x and so on), so a forwarded port doesn't put it on the
+  internet. The page works on phones and headsets too.
+- **wan** uploads the page, `SHA256SUMS` and the images to your web server with
+  `rsync`, resuming big files. Serve that folder over HTTPS (with Caddy:
+  `root * /var/www/finux` and `file_server`). `--sign` signs `SHA256SUMS` with
+  your SSH key and prints the key line: put that line in this README too, so
+  people can check signatures against a copy the server didn't give them.
+- Needs Python 3 (`pkg install python3` on FreeBSD), and `rsync` for **wan**.
+  Tests: `cd share && python3 -m unittest test_finux_share -v`.
+
 ## Turn on the Qoin core (later)
 
 `rc.d/qoind` is shipped and correct, but the daemon is Stage 3. Once
@@ -78,5 +100,6 @@ frostbsd/
 │       ├── motd.frost             # Frost login banner
 │       └── rc.conf.frost          # service + hardening defaults
 ├── packages/flavor-kali.pkglist   # curated security toolset (+ gap notes)
+├── share/finux-share              # share the image: home network, then internet
 └── docs/FROSTBSD_ARCHITECTURE.md   # architecture & roadmap
 ```

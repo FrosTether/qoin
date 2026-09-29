@@ -1,0 +1,3 @@
+#!/bin/sh
+# finux-share: share a Finux image on your home network, then on the internet.
+exec python3 "$(dirname "$(readlink -f "$0")")/finux_share.py" "$@"

@@ -35,6 +35,10 @@ qemu-system-x86_64 -m 4096 -cdrom /tmp/frostos-build/FrostOS.*.iso -boot d
 For a raw disk image instead of an ISO, change the `<type image="iso" .../>` line
 in `FrostOS.kiwi` to `image="oem"`.
 
+To share the ISO on your home network, then the internet, use FrostBSD's
+`finux-share`: `../frostbsd/share/finux-share lan /tmp/frostos-build`. See
+[Share it](../frostbsd/README.md#share-it-home-network-first-then-the-internet).
+
 ## What ships
 
 | Path | Purpose |
