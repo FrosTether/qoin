@@ -51,6 +51,7 @@ ABI = json.loads("""[
  {"type":"function","name":"decimals","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint8"}]},
  {"type":"function","name":"minter","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"address"}]},
  {"type":"function","name":"totalSupply","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint256"}]},
+ {"type":"function","name":"dailyMintLimit","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint256"}]},
  {"type":"function","name":"mintHeadroom","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint256"}]},
  {"type":"function","name":"depositMinted","stateMutability":"view","inputs":[{"name":"moneroTxId","type":"bytes32"},{"name":"subaddressIndex","type":"uint32"}],"outputs":[{"name":"","type":"bool"}]},
  {"type":"function","name":"mintFromMonero","stateMutability":"nonpayable","inputs":[{"name":"to","type":"address"},{"name":"amount","type":"uint256"},{"name":"moneroTxId","type":"bytes32"},{"name":"subaddressIndex","type":"uint32"}],"outputs":[]},
@@ -178,6 +179,10 @@ class Bridge:
             txid = bytes.fromhex(t["txid"])
             if not self.token.functions.depositMinted(txid, minor).call():
                 amount = t["amount"] * self.scale
+                if amount > self.token.functions.dailyMintLimit().call():
+                    self.log(f"deposit {key} of {xmr(t['amount'])} XMR is over the whole daily mint limit; "
+                             f"it waits until the owner raises the limit")
+                    continue                           # never fits, so don't hold up the deposits behind it
                 if amount > self.token.functions.mintHeadroom().call():
                     self.log(f"daily mint limit reached; deposit {key} waits for the next window")
                     return
@@ -292,13 +297,7 @@ class Bridge:
 
     # ---------- reserves ----------
     def unpaid_burns(self, block="latest"):
-        """EXMR burned but not yet paid or refunded (the vault still owes it)."""
-        total = 0
-        for burn_id in range(self.token.functions.burnCount().call(block_identifier=block)):
-            _, state, _, amount, _ = self.token.functions.burns(burn_id).call(block_identifier=block)
-            if state == PENDING:
-                total += amount
-        return total
+        return unpaid_burns(self.token, block)
 
     def status(self):
         balance = self.wallet("get_balance", {"account_index": 0})
@@ -330,6 +329,16 @@ class Bridge:
         }
 
 
+def unpaid_burns(token, block="latest"):
+    """EXMR burned but not yet paid or refunded (the vault still owes it)."""
+    total = 0
+    for burn_id in range(token.functions.burnCount().call(block_identifier=block)):
+        _, state, _, amount, _ = token.functions.burns(burn_id).call(block_identifier=block)
+        if state == PENDING:
+            total += amount
+    return total
+
+
 def verify_proof(w3, wallet, proof):
     """Check a reserve proof: Monero signature, reserve >= owed, and the claims against ETC."""
     m = PROOF_MESSAGE.fullmatch(proof["message"])
@@ -343,16 +352,19 @@ def verify_proof(w3, wallet, proof):
     block_ok = Web3.to_hex(w3.eth.get_block(number).hash) == block_hash
     try:
         supply_ok = token.functions.totalSupply().call(block_identifier=number) == supply
+        unpaid_ok = unpaid_burns(token, number) == unpaid
     except Exception:
-        supply_ok = None                               # this node keeps no state that old; try an archive RPC
+        supply_ok = unpaid_ok = None                   # this node keeps no state that old; try an archive RPC
     return {
-        "ok": bool(check["good"]) and reserve >= owed and block_ok and supply_ok is not False,
+        "ok": bool(check["good"]) and reserve >= owed and block_ok and supply_ok is not False
+              and unpaid_ok is not False,
         "signature_good": check["good"],
         "reserve_xmr": xmr(reserve),
         "owed_xmr": xmr(owed),
         "etc_block": number,
         "etc_block_matches": block_ok,
         "supply_matches_chain": supply_ok,
+        "unpaid_burns_match_chain": unpaid_ok,
     }
 
 

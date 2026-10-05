@@ -73,8 +73,8 @@ but can't see which were spent. Use a reserve proof instead:
   1. The signature (`check_reserve_proof`).
   2. The reserve (total minus spent) is at least supply plus unpaid burns.
   3. The block hash is really that ETC block.
-  4. The supply matches the chain at that block. This needs a node that still
-     has that block's state; an archive RPC always does.
+  4. The supply and the unpaid burns match the chain at that block. This needs
+     a node that still has that block's state; an archive RPC always does.
 
 Every mint names its Monero txid, and every burn is on-chain with its payout
 txid or its refund. So the whole history can be audited.
@@ -83,8 +83,9 @@ txid or its refund. So the whole history can be audited.
 
 - **Daily mint limit.** The owner sets `dailyMintLimit`, the most the minter
   can mint in each 24-hour window. Deposits over the remaining headroom wait
-  for the next window (`mintHeadroom()` shows it). If the hot key leaks, this
-  is the most it can mint a day.
+  for the next window (`mintHeadroom()` shows it). A single deposit larger than
+  the whole limit waits until the owner raises it, without holding up the
+  deposits behind it. If the hot key leaks, this is the most it can mint a day.
 - **Kill switch.** `setMinter(address(0))` stops all minting and settling at
   once. Burns stay pending on-chain until a minter settles them.
 
