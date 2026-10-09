@@ -1,7 +1,9 @@
-# GCII Coin peg: 1 GCII = 1 Qoin
+# GCII Coin peg design: GCII and Qoin
 
-GCII Coin is the Ethereum Classic side of Qoin. Every GCII in existence is backed
-by one Qoin locked in a vault on Frostoise, so the two always trade one for one.
+GCII Coin is the Ethereum Classic side of Qoin. GCII is designed to track Qoin 1:1
+by its own rules: each GCII is meant to be minted only against one Qoin locked in
+a vault on Frostoise and burned when that Qoin is released. This is not a promise
+of value.
 
 | Field | Value |
 | --- | --- |
@@ -9,7 +11,7 @@ by one Qoin locked in a vault on Frostoise, so the two always trade one for one.
 | Chain | Ethereum Classic (ERC-20, `src/GCIICoin.sol`) |
 | Decimals | 11, matching Frostoise's atomic unit if it keeps Wownero's 11 places |
 | Starting supply | 0. GCII is only minted against locked Qoin |
-| Backing | 1 Qoin per GCII, held in the Frostoise vault |
+| Vault design | 1 Qoin locked per GCII minted, held in the Frostoise vault |
 | Minter | The contract `owner`, which should be the vault operator's multisig |
 
 ## Mint (Qoin in, GCII out)
@@ -30,7 +32,7 @@ by one Qoin locked in a vault on Frostoise, so the two always trade one for one.
 
 ## Invariant
 
-`GCII.totalSupply() <= Qoin held in the vault`, at all times. The vault's
+The design rule is `GCII.totalSupply() <= Qoin held in the vault`. The vault's
 Frostoise view key is published so anyone can check the balance without being
 able to spend it. This is the same split as Grayson's Wallet: managers hold the
 spend key, everyone else can hold the view key.
@@ -38,7 +40,7 @@ spend key, everyone else can hold the view key.
 ## Fees
 
 None at launch. If a fee is added later it is taken in Qoin at mint or redeem
-time and never changes the 1:1 rate.
+time and is not designed to change the 1:1 mint/redeem ratio.
 
 ## Risks
 
